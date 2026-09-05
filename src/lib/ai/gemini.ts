@@ -16,7 +16,7 @@ export async function generateStructuredJson(
 ): Promise<unknown> {
   const genAI = getClient();
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-3.5-flash-lite",
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.1,

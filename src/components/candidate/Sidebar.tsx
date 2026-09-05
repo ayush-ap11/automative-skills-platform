@@ -18,13 +18,11 @@ import { createClient } from "@/lib/supabase/client";
 
 export const CANDIDATE_NAV_ITEMS = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: LayoutDashboard },
-  { label: "My Profile", href: "/profile", icon: User },
   { label: "My Documents", href: "/documents", icon: FileText },
   { label: "Assessments", href: "/assessments", icon: CheckSquare },
   { label: "EV Readiness", href: "/ev-readiness", icon: Zap },
   { label: "Feedback", href: "/feedback", icon: MessageSquareQuote },
   { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {

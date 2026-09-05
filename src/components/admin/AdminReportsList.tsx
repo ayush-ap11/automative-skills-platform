@@ -98,8 +98,8 @@ export function AdminReportsList({ reports }: Props) {
                       <span className="text-[11px] text-muted-foreground">• {REPORT_TYPE_LABELS[r.report_type] || r.report_type}</span>
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3" /> {new Date(r.generated_at).toLocaleDateString()}
+                      <span className="inline-flex items-center gap-1" suppressHydrationWarning>
+                        <Calendar className="size-3" /> {new Date(r.generated_at).toLocaleDateString("en-AU")}
                       </span>
                       <span>•</span>
                       <span className="inline-flex items-center gap-1">

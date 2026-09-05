@@ -13,8 +13,7 @@ const PRIMARY_NAV = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Candidates", href: "/admin/candidates", icon: Users },
   { label: "Assessments", href: "/admin/assessments", icon: CheckSquare },
-  { label: "Analytics", href: "/admin/analytics", icon: TrendingUp },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
 ];
 
 const MORE_NAV = [
@@ -23,7 +22,7 @@ const MORE_NAV = [
   { label: "Competency Framework", href: "/admin/competency-framework", icon: Award },
   { label: "EV Readiness", href: "/admin/ev-readiness", icon: Zap },
   { label: "Documents", href: "/admin/documents", icon: FileText },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { label: "Analytics", href: "/admin/analytics", icon: TrendingUp },
   { label: "Compliance", href: "/admin/compliance", icon: Shield },
   { label: "AI Governance", href: "/admin/ai-governance", icon: Sparkles },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: History },

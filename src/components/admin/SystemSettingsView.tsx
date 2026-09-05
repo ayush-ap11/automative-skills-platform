@@ -2,41 +2,35 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Upload, Loader2, Check, AlertCircle, Building2, Clock, Palette } from "lucide-react";
+import { Upload, Loader2, Check, Building2, Clock, Palette, Copy, RefreshCw, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryWeightsCard } from "./CategoryWeightsCard";
-import { updateOrganisation, uploadLogo, updateRetentionPolicy } from "@/app/(admin)/admin/settings/actions";
+import { updateOrganisation, uploadLogo, updateRetentionPolicy, regenerateInviteCode } from "@/app/(admin)/admin/settings/actions";
 
 export interface OrganisationData {
-  id: string;
-  name: string;
-  logo_url: string | null;
-  primary_color: string | null;
-  secondary_color: string | null;
+  id: string; name: string; logo_url: string | null;
+  primary_color: string | null; secondary_color: string | null; invite_code?: string | null;
 }
 
 export interface SystemSettingsData {
-  passing_threshold: number;
-  category_weights: Record<string, number> | null;
-  retention_policy_days: number;
+  passing_threshold: number; category_weights: Record<string, number> | null; retention_policy_days: number;
 }
 
-interface Props {
-  organisation: OrganisationData;
-  settings: SystemSettingsData;
-}
+interface Props { organisation: OrganisationData; settings: SystemSettingsData; }
 
 export function SystemSettingsView({ organisation, settings }: Props) {
   const [orgName, setOrgName] = useState(organisation.name || "");
   const [primaryColor, setPrimaryColor] = useState(organisation.primary_color || "#0284c7");
   const [secondaryColor, setSecondaryColor] = useState(organisation.secondary_color || "#0f172a");
   const [logoUrl, setLogoUrl] = useState<string | null>(organisation.logo_url);
+  const [inviteCode, setInviteCode] = useState(organisation.invite_code || "");
   const [orgStatus, setOrgStatus] = useState<"idle" | "loading" | "saved" | "error">("idle");
   const [orgMsg, setOrgMsg] = useState<string | null>(null);
-
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoMsg, setLogoMsg] = useState<string | null>(null);
-
+  const [codeStatus, setCodeStatus] = useState<"idle" | "loading" | "saved" | "error">("idle");
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [codeMsg, setCodeMsg] = useState<string | null>(null);
   const [retentionDays, setRetentionDays] = useState(String(settings.retention_policy_days || 2555));
   const [retStatus, setRetStatus] = useState<"idle" | "loading" | "saved" | "error">("idle");
   const [retMsg, setRetMsg] = useState<string | null>(null);
@@ -62,6 +56,23 @@ export function SystemSettingsView({ organisation, settings }: Props) {
     else if (res.url) setLogoUrl(res.url);
   };
 
+  const handleRegenerateCode = async () => {
+    setCodeStatus("loading"); setCodeMsg(null);
+    const res = await regenerateInviteCode();
+    if (res.error) { setCodeStatus("error"); setCodeMsg(res.error); }
+    else if (res.newCode) {
+      setInviteCode(res.newCode); setCodeStatus("saved");
+      setTimeout(() => setCodeStatus("idle"), 2500);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
+
   const handleSaveRetention = async () => {
     setRetStatus("loading"); setRetMsg(null);
     const res = await updateRetentionPolicy(Number(retentionDays) || 2555);
@@ -70,15 +81,14 @@ export function SystemSettingsView({ organisation, settings }: Props) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Organisation & Branding */}
-      <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4 text-xs">
+    <div className="space-y-6 text-xs">
+      <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground flex items-center gap-1.5"><Building2 className="size-4 text-primary" /> Organisation & Branding</h2>
-            <p className="text-muted-foreground text-[11px]">Configure tenant identity, portal branding, and logo display.</p>
+            <p className="text-muted-foreground text-[11px]">Configure tenant identity, portal branding, and candidate registration code.</p>
           </div>
-          <Button onClick={handleSaveOrg} disabled={orgStatus === "loading"} size="sm" className="cursor-pointer text-xs h-8 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+          <Button onClick={handleSaveOrg} disabled={orgStatus === "loading"} size="sm" className="cursor-pointer text-xs h-8 bg-primary text-primary-foreground hover:opacity-90">
             {orgStatus === "loading" ? <Loader2 className="size-3.5 animate-spin" /> : orgStatus === "saved" ? <><Check className="size-3.5 mr-1" /> Saved</> : "Save Details"}
           </Button>
         </div>
@@ -123,24 +133,39 @@ export function SystemSettingsView({ organisation, settings }: Props) {
             </div>
           </div>
         </div>
+
+        <div className="pt-3 border-t border-border space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="font-semibold block flex items-center gap-1.5"><KeyRound className="size-3.5 text-primary" /> Candidate Registration Invite Code</label>
+            <Button onClick={handleRegenerateCode} disabled={codeStatus === "loading"} variant="outline" size="sm" className="cursor-pointer text-xs h-7 gap-1">
+              {codeStatus === "loading" ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+              {codeStatus === "saved" ? "Regenerated!" : "Regenerate Code"}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1 rounded border border-border bg-muted/60 font-mono text-xs font-bold tracking-wider text-foreground select-all">{inviteCode || "Not generated"}</div>
+            <Button onClick={handleCopyCode} variant="outline" size="sm" className="cursor-pointer text-xs h-7 gap-1">
+              {codeCopied ? <><Check className="size-3 text-[var(--success)]" /> Copied</> : <><Copy className="size-3" /> Copy</>}
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-[11px]">Share this 8-character code with candidates to link their account to this organisation.</p>
+          {codeMsg && <p className="text-destructive text-xs">{codeMsg}</p>}
+        </div>
       </div>
 
-      {/* 2. Scoring Configuration */}
       <CategoryWeightsCard initialThreshold={settings.passing_threshold} initialWeights={settings.category_weights || {}} />
 
-      {/* 3. Data Retention */}
-      <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4 text-xs">
+      <div className="p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground flex items-center gap-1.5"><Clock className="size-4 text-primary" /> Data Retention Policy</h2>
             <p className="text-muted-foreground text-[11px]">Audit ledger and evidence retention compliance.</p>
           </div>
-          <Button onClick={handleSaveRetention} disabled={retStatus === "loading"} size="sm" className="cursor-pointer text-xs h-8 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+          <Button onClick={handleSaveRetention} disabled={retStatus === "loading"} size="sm" className="cursor-pointer text-xs h-8 bg-primary text-primary-foreground hover:opacity-90">
             {retStatus === "loading" ? <Loader2 className="size-3.5 animate-spin" /> : retStatus === "saved" ? <><Check className="size-3.5 mr-1" /> Saved</> : "Save Retention"}
           </Button>
         </div>
         {retMsg && <p className="text-destructive text-xs">{retMsg}</p>}
-
         <div className="flex items-center gap-3 max-w-sm">
           <input type="number" min="30" max="7300" value={retentionDays} onChange={(e) => setRetentionDays(e.target.value)} className="w-32 rounded border border-border bg-background p-2 text-xs font-semibold" />
           <span className="text-xs text-muted-foreground font-medium">days</span>

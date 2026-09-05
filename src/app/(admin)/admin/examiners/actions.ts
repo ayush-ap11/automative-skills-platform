@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 
 async function verifyAdmin() {
   const supabase = await createClient();
@@ -28,18 +29,23 @@ export async function inviteExaminer(
 
   try {
     const adminClient = createAdminClient();
-    const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(mail, {
-      data: { full_name: name, role: "examiner" },
+    const tempPassword = generateTemporaryPassword();
+
+    const { data: createData, error: createErr } = await adminClient.auth.admin.createUser({
+      email: mail,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { full_name: name, role: "examiner" },
     });
 
-    if (inviteErr) {
-      if (inviteErr.message.toLowerCase().includes("already") || inviteErr.status === 422) {
+    if (createErr) {
+      if (createErr.message.toLowerCase().includes("already") || createErr.status === 422) {
         return { error: `An account with ${mail} already exists.` };
       }
-      return { error: inviteErr.message };
+      return { error: createErr.message };
     }
 
-    const newUserId = inviteData?.user?.id;
+    const newUserId = createData?.user?.id;
     if (!newUserId) return { error: "Failed to create invited user account." };
 
     const profilePayload: Record<string, unknown> = {
@@ -66,9 +72,38 @@ export async function inviteExaminer(
     }, { onConflict: "profile_id" });
     if (exmErr) return { error: exmErr.message };
 
-    return { success: true };
+    return { success: true, temporaryPassword: tempPassword };
   } catch (err: any) {
     return { error: err?.message || "Failed to invite examiner" };
+  }
+}
+
+export async function resetUserPassword(profileId: string) {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("id, organisation_id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (!target || target.organisation_id !== orgId || target.role !== "examiner") {
+    return { error: "Examiner not found or outside organisation." };
+  }
+
+  try {
+    const newPassword = generateTemporaryPassword();
+    const adminClient = createAdminClient();
+    const { error: updateErr } = await adminClient.auth.admin.updateUserById(profileId, {
+      password: newPassword,
+    });
+    if (updateErr) return { error: updateErr.message };
+
+    return { success: true, newPassword };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to reset password." };
   }
 }
 

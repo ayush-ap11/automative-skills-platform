@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AssessmentReviewScreen,
   CandidateInfo,
@@ -69,11 +70,13 @@ export default async function AssessmentReviewPage({ params }: PageProps) {
     .eq("template_id", assessment.template_id)
     .order("order_index", { ascending: true });
 
-  const { data: answers } = await supabase
+  const adminSupabase = createAdminClient();
+
+  const { data: answers } = await adminSupabase
     .from("candidate_answers")
     .select(`
       id, question_id, selected_option_ids, answer_text,
-      verbal_answers (id, transcripts (transcript_text)),
+      verbal_answers (id, audio_storage_path, transcripts (transcript_text)),
       ai_analyses (id, provisional_score, technical_score, safety_score, diagnostic_reasoning_score, communication_score, completeness_score, critical_safety_flag, flag_reason),
       examiner_reviews (id, decision, final_score, comment)
     `)
@@ -92,10 +95,11 @@ export default async function AssessmentReviewPage({ params }: PageProps) {
         order_index: s.order_index,
         questions: sortedQs.map((q) => {
           const ans = answerMap.get(q.id);
-          const ai = (ans?.ai_analyses as any)?.[0] || null;
-          const rev = (ans?.examiner_reviews as any)?.[0] || null;
-          const verbal = (ans?.verbal_answers as any)?.[0] || null;
-          const transcript = (verbal?.transcripts as any)?.[0]?.transcript_text || null;
+          const ai = Array.isArray(ans?.ai_analyses) ? ans.ai_analyses[0] : (ans?.ai_analyses || null);
+          const rev = Array.isArray(ans?.examiner_reviews) ? ans.examiner_reviews[0] : (ans?.examiner_reviews || null);
+          const verbal = Array.isArray(ans?.verbal_answers) ? ans.verbal_answers[0] : (ans?.verbal_answers as any || null);
+          const transcriptList = (verbal as any)?.transcripts;
+          const transcript = Array.isArray(transcriptList) ? transcriptList[0]?.transcript_text : (transcriptList?.transcript_text || null);
           return {
             question: {
               id: q.id, questionNumber: qNumber++, question_text: q.question_text,

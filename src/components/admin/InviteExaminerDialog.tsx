@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, CheckCircle2, Mail, Plus, X } from "lucide-react";
+import { Loader2, AlertCircle, Mail, Plus, X } from "lucide-react";
 import { inviteExaminer } from "@/app/(admin)/admin/examiners/actions";
+import { OneTimePasswordPanel } from "@/components/admin/OneTimePasswordPanel";
 
 interface Props {
   open: boolean;
@@ -22,12 +23,12 @@ export function InviteExaminerDialog({ open, onOpenChange, onSuccess }: Props) {
   const [maxCandidates, setMaxCandidates] = useState("20");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setFullName(""); setEmail(""); setSpecialisations(["Light Vehicle Mechanical"]);
-      setCustomSpec(""); setMaxCandidates("20"); setLoading(false); setErrorMsg(null); setSuccessMsg(null);
+      setCustomSpec(""); setMaxCandidates("20"); setLoading(false); setErrorMsg(null); setTemporaryPassword(null);
     }
   }, [open]);
 
@@ -43,31 +44,36 @@ export function InviteExaminerDialog({ open, onOpenChange, onSuccess }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim()) return setErrorMsg("Full name and email are required.");
-    setLoading(true); setErrorMsg(null); setSuccessMsg(null);
+    setLoading(true); setErrorMsg(null);
 
     const res = await inviteExaminer(fullName, email, specialisations, Number(maxCandidates) || 20);
     setLoading(false);
     if (res.error) {
       setErrorMsg(res.error);
-    } else {
-      setSuccessMsg(`Invitation sent to ${email}`);
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess();
-      }, 1500);
+    } else if (res.temporaryPassword) {
+      setTemporaryPassword(res.temporaryPassword);
     }
+  };
+
+  const handleDone = () => {
+    onOpenChange(false);
+    onSuccess();
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !loading && onOpenChange(v)}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Invite Assessment Examiner</DialogTitle></DialogHeader>
-        {successMsg ? (
-          <div className="py-6 text-center space-y-2">
-            <CheckCircle2 className="size-10 text-emerald-600 mx-auto" />
-            <p className="font-semibold text-sm text-foreground">{successMsg}</p>
-            <p className="text-xs text-muted-foreground">The examiner will receive an email to set their credentials.</p>
-          </div>
+        <DialogHeader>
+          <DialogTitle>{temporaryPassword ? "Examiner Account Created" : "Invite Assessment Examiner"}</DialogTitle>
+        </DialogHeader>
+
+        {temporaryPassword ? (
+          <OneTimePasswordPanel
+            email={email}
+            password={temporaryPassword}
+            roleLabel="examiner"
+            onDone={handleDone}
+          />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             {errorMsg && (
@@ -111,7 +117,7 @@ export function InviteExaminerDialog({ open, onOpenChange, onSuccess }: Props) {
             <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading} className="cursor-pointer">Cancel</Button>
               <Button type="submit" disabled={loading} className="cursor-pointer bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-                {loading ? <><Loader2 className="size-3.5 animate-spin mr-1.5" /> Sending...</> : <><Mail className="size-3.5 mr-1" /> Send Invitation</>}
+                {loading ? <><Loader2 className="size-3.5 animate-spin mr-1.5" /> Creating...</> : <><Mail className="size-3.5 mr-1" /> Create Examiner</>}
               </Button>
             </DialogFooter>
           </form>

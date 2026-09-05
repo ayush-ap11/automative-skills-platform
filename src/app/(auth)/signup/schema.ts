@@ -41,6 +41,10 @@ export const signupSchema = z
     state: z.enum(AU_STATES, {
       message: "Please select your Australian state/territory.",
     }),
+    invite_code: z
+      .string()
+      .trim()
+      .min(1, "Organisation invite code is required."),
     usi: z.string().trim().optional(),
     password: z.string().min(6, "Password must be at least 6 characters."),
     confirm_password: z.string().min(6, "Please confirm your password."),

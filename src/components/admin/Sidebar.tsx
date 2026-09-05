@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, CheckSquare, HelpCircle, UserCheck, Award, Zap,
-  FileText, BarChart3, TrendingUp, Shield, Sparkles, History, Settings, LogOut, Wrench,
+  FileText, BarChart3, TrendingUp, Shield, Sparkles, History, LogOut, Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,7 +35,6 @@ export const ADMIN_NAV_SECTIONS = [
       { label: "Compliance", href: "/admin/compliance", icon: Shield },
       { label: "AI Governance", href: "/admin/ai-governance", icon: Sparkles },
       { label: "Audit Logs", href: "/admin/audit-logs", icon: History },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

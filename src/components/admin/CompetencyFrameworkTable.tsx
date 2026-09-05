@@ -79,7 +79,7 @@ export function CompetencyFrameworkTable({ initialUnits, defaultFrameworkVersion
                     {u.skill_set && <><span>•</span><span>Skill Set: {u.skill_set}</span></>}
                     <span>•</span>
                     <span>Version: {u.version}</span>
-                    {u.effective_date && <><span>•</span><span className="inline-flex items-center gap-1"><Calendar className="size-3" /> {new Date(u.effective_date).toLocaleDateString()}</span></>}
+                    {u.effective_date && <><span>•</span><span className="inline-flex items-center gap-1" suppressHydrationWarning><Calendar className="size-3" /> {new Date(u.effective_date).toLocaleDateString("en-AU")}</span></>}
                   </div>
                 </div>
 

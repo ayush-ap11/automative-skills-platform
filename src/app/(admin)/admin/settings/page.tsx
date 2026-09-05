@@ -14,11 +14,23 @@ export default async function AdminSettingsPage() {
   if (profile?.role !== "admin" || !profile.organisation_id) redirect("/auth/login");
   const orgId = profile.organisation_id;
 
-  const { data: org } = await supabase
+  let org: any = null;
+  const { data: orgWithCode, error: orgErr } = await supabase
     .from("organisations")
-    .select("id, name, logo_url, primary_color, secondary_color")
+    .select("id, name, logo_url, primary_color, secondary_color, invite_code")
     .eq("id", orgId)
-    .single();
+    .maybeSingle();
+
+  if (orgErr) {
+    const { data: fallbackOrg } = await supabase
+      .from("organisations")
+      .select("id, name, logo_url, primary_color, secondary_color")
+      .eq("id", orgId)
+      .maybeSingle();
+    org = fallbackOrg;
+  } else {
+    org = orgWithCode;
+  }
 
   const { data: settingsRow } = await supabase
     .from("system_settings")
@@ -32,6 +44,7 @@ export default async function AdminSettingsPage() {
     logo_url: org?.logo_url || null,
     primary_color: org?.primary_color || null,
     secondary_color: org?.secondary_color || null,
+    invite_code: org?.invite_code || null,
   };
 
   const settings: SystemSettingsData = {

@@ -107,3 +107,18 @@ export async function updateRetentionPolicy(days: number) {
 
   return { success: true };
 }
+
+export async function regenerateInviteCode(): Promise<{ success?: boolean; newCode?: string; error?: string }> {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const newCode = Math.random().toString(36).substring(2, 10).toLowerCase();
+  const { error } = await supabase
+    .from("organisations")
+    .update({ invite_code: newCode })
+    .eq("id", orgId);
+
+  if (error) return { error: error.message };
+  return { success: true, newCode };
+}

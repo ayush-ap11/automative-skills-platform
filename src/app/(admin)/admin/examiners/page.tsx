@@ -6,7 +6,14 @@ import { ExaminerRecord } from "@/components/admin/EditExaminerDialog";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminExaminersPage() {
+interface PageProps {
+  searchParams?: Promise<{ action?: string }>;
+}
+
+export default async function AdminExaminersPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const initialAction = sp?.action;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
@@ -66,7 +73,7 @@ export default async function AdminExaminersPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Examiner Management</h1>
       </div>
-      <ExaminerManagementTable examiners={examiners} />
+      <ExaminerManagementTable examiners={examiners} initialAction={initialAction} />
     </div>
   );
 }

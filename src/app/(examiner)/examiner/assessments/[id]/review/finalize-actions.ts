@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { calculateEVReadiness } from "@/lib/ai/ev-readiness-calculation";
 import { generateAndStoreReport } from "@/lib/pdf/generate-and-store-report";
 
@@ -17,8 +18,9 @@ export async function saveDraft(assessmentId: string): Promise<{ success?: boole
     .maybeSingle();
 
   if (!a) return { error: "Assessment not found or not assigned to you" };
+  const adminSupabase = createAdminClient();
   if (a.status !== "under_review" && a.status !== "completed") {
-    const { error } = await supabase.from("assessments").update({ status: "under_review" }).eq("id", assessmentId);
+    const { error } = await adminSupabase.from("assessments").update({ status: "under_review" }).eq("id", assessmentId);
     if (error) return { error: error.message };
   }
   return { success: true };
@@ -54,9 +56,10 @@ export async function finalizeOutcome(
     }
   }
 
-  const { data: answers } = await supabase.from("candidate_answers").select("id, question_id").eq("assessment_id", assessmentId);
+  const adminSupabase = createAdminClient();
+  const { data: answers } = await adminSupabase.from("candidate_answers").select("id, question_id").eq("assessment_id", assessmentId);
   const answerIds = (answers || []).map((a) => a.id);
-  const { data: reviews } = await supabase
+  const { data: reviews } = await adminSupabase
     .from("examiner_reviews")
     .select("candidate_answer_id, decision, final_score")
     .in("candidate_answer_id", answerIds);
@@ -86,7 +89,7 @@ export async function finalizeOutcome(
   const scores = (reviews || []).map((r) => Number(r.final_score)).filter((s) => !isNaN(s));
   const overall_score = scores.length > 0 ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0;
 
-  await supabase
+  await adminSupabase
     .from("assessments")
     .update({ status: "completed", outcome, overall_score, completed_at: new Date().toISOString() })
     .eq("id", assessmentId);
@@ -105,7 +108,7 @@ export async function finalizeOutcome(
 
   const candidateUserId = (assessment.candidate_profiles as any)?.profile_id;
   if (candidateUserId) {
-    await supabase.from("notifications").insert({
+    await adminSupabase.from("notifications").insert({
       recipient_id: candidateUserId,
       type: "assessment_reviewed",
       title: "Assessment Reviewed",
@@ -113,7 +116,7 @@ export async function finalizeOutcome(
     });
   }
 
-  await supabase.from("audit_logs").insert({
+  await adminSupabase.from("audit_logs").insert({
     actor_id: user.id,
     action: "assessment_finalized",
     entity_type: "assessment",

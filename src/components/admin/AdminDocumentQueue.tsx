@@ -120,7 +120,7 @@ export function AdminDocumentQueue({ initialDocuments, filteredCandidateName }: 
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><FileText className="size-3" /> {doc.file_name}</span>
                     <span>•</span>
-                    <span className="inline-flex items-center gap-1"><Calendar className="size-3" /> {new Date(doc.uploaded_at).toLocaleDateString()}</span>
+                    <span className="inline-flex items-center gap-1" suppressHydrationWarning><Calendar className="size-3" /> {new Date(doc.uploaded_at).toLocaleDateString("en-AU")}</span>
                     {doc.expiry_date && <><span>•</span>{getExpiryBadge(doc.expiry_date)}</>}
                   </div>
                 </div>

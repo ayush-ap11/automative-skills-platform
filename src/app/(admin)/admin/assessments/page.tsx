@@ -5,7 +5,16 @@ import { AssessmentsAdminView } from "@/components/admin/AssessmentsAdminView";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminAssessmentsPage() {
+interface PageProps {
+  searchParams?: Promise<{ tab?: string; status?: string; action?: string }>;
+}
+
+export default async function AdminAssessmentsPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const initialTab = sp?.tab === "assigned" ? "assigned" : "templates";
+  const initialStatus = sp?.status || "all";
+  const initialAction = sp?.action;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
@@ -40,6 +49,7 @@ export default async function AdminAssessmentsPage() {
     .filter((a: any) => a.candidate_profiles?.profiles?.organisation_id === orgId || a.assessment_templates?.organisation_id === orgId)
     .map((a: any) => ({
       id: a.id,
+      candidate_id: a.candidate_profiles?.id,
       candidate_name: a.candidate_profiles?.profiles?.full_name || "Unknown Candidate",
       template_title: a.assessment_templates?.title || "Standard Template",
       examiner_name: a.assigned_examiner?.full_name || "Unassigned",
@@ -82,6 +92,9 @@ export default async function AdminAssessmentsPage() {
         candidates={candidates}
         examiners={examiners}
         frameworkVersion={frameworkVersion}
+        initialTab={initialTab}
+        initialStatus={initialStatus}
+        initialAction={initialAction}
       />
     </div>
   );

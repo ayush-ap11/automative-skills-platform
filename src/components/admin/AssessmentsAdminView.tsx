@@ -3,97 +3,106 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutTemplate, UserCheck, Layers, Calendar, ChevronRight } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { TemplateFormDialog } from "./TemplateFormDialog";
 import { AssignAssessmentDialog } from "./AssignAssessmentDialog";
+import { AdminAssignedAssessmentsList, AssignedItem } from "./AdminAssignedAssessmentsList";
 
-interface TemplateItem {
-  id: string;
-  title: string;
-  framework_version: string;
-  section_count: number;
-  created_at: string;
-}
-
-interface AssignedItem {
-  id: string;
-  candidate_name: string;
-  template_title: string;
-  examiner_name: string;
-  status: string;
-  assigned_at: string;
+export interface TemplateItem {
+  id: string; title: string; framework_version: string; section_count: number; created_at: string;
 }
 
 interface Props {
-  templates: TemplateItem[];
-  assignedAssessments: AssignedItem[];
+  templates: TemplateItem[]; assignedAssessments: AssignedItem[];
   candidates: Array<{ id: string; name: string; email: string }>;
   examiners: Array<{ id: string; name: string; email: string }>;
-  frameworkVersion: string;
+  frameworkVersion: string; initialTab?: string; initialStatus?: string; initialAction?: string;
 }
 
-export function AssessmentsAdminView({ templates, assignedAssessments, candidates, examiners, frameworkVersion }: Props) {
+export function AssessmentsAdminView({ templates, assignedAssessments, candidates, examiners, frameworkVersion, initialTab = "templates", initialStatus = "all", initialAction }: Props) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"templates" | "assigned">(initialTab === "assigned" ? "assigned" : "templates");
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(initialAction === "assign");
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
 
-  const getStatusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      not_started: "bg-muted text-muted-foreground border-border",
-      in_progress: "bg-sky-500/10 text-sky-600 border-sky-500/20",
-      submitted: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-      under_review: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-      completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    };
-    return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium capitalize border ${map[status] || map.not_started}`}>
-        {status.replace(/_/g, " ")}
-      </span>
-    );
-  };
+  const pendingCount = assignedAssessments.filter(a => a.status === "submitted" || a.status === "under_review").length;
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="templates">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="templates" className="cursor-pointer gap-1.5">
-              <LayoutTemplate className="size-3.5" /> Templates ({templates.length})
-            </TabsTrigger>
-            <TabsTrigger value="assigned" className="cursor-pointer gap-1.5">
-              <UserCheck className="size-3.5" /> Assigned ({assignedAssessments.length})
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {/* Rounded Sliding Segmented Control */}
+        <div className="relative inline-grid grid-cols-2 p-1 rounded-full bg-muted/80 border border-border shadow-inner backdrop-blur-xs select-none min-w-[320px] sm:min-w-[360px]">
+          {/* Animated Slider Pill that slides on active */}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-[var(--primary)] shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              activeTab === "templates" ? "left-1" : "left-1/2"
+            }`}
+          />
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("templates")}
+            className={`relative z-10 flex items-center justify-center gap-2 px-5 py-2 rounded-full text-xs font-semibold cursor-pointer transition-colors duration-200 ${
+              activeTab === "templates" ? "text-[var(--primary-foreground)]" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <LayoutTemplate className="size-3.5" />
+            <span>Templates</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+              activeTab === "templates" ? "bg-white/20 text-white" : "bg-background/80 text-muted-foreground border border-border"
+            }`}>
+              {templates.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("assigned")}
+            className={`relative z-10 flex items-center justify-center gap-2 px-5 py-2 rounded-full text-xs font-semibold cursor-pointer transition-colors duration-200 ${
+              activeTab === "assigned" ? "text-[var(--primary-foreground)]" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <UserCheck className="size-3.5" />
+            <span>Assigned</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+              activeTab === "assigned" ? "bg-white/20 text-white" : "bg-background/80 text-muted-foreground border border-border"
+            }`}>
+              {assignedAssessments.length}
+            </span>
+            {pendingCount > 0 && (
+              <span className={`size-2 rounded-full transition-colors ${
+                activeTab === "assigned" ? "bg-amber-300 ring-2 ring-white/30" : "bg-amber-500"
+              } animate-pulse`} title={`${pendingCount} pending review`} />
+            )}
+          </button>
         </div>
 
-        <TabsContent value="templates" className="space-y-3">
-          <div className="flex justify-end">
-            <Button onClick={() => setTemplateDialogOpen(true)} className="text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-              <Plus className="size-4" /> New Template
-            </Button>
-          </div>
+        {activeTab === "templates" ? (
+          <Button onClick={() => setTemplateDialogOpen(true)} className="rounded-full text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-4">
+            <Plus className="size-4" /> New Template
+          </Button>
+        ) : (
+          <Button onClick={() => setAssignDialogOpen(true)} className="rounded-full text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-4">
+            <Plus className="size-4" /> Assign New Assessment
+          </Button>
+        )}
+      </div>
 
+      {activeTab === "templates" ? (
+        <div className="space-y-3">
           {templates.length === 0 ? (
-            <div className="p-12 text-center border border-dashed border-border rounded-xl bg-card text-muted-foreground text-sm">
-              No assessment templates found — create your first one.
-            </div>
+            <div className="p-12 text-center border border-dashed border-border rounded-xl bg-card text-muted-foreground text-sm">No assessment templates found.</div>
           ) : (
             <div className="divide-y divide-border rounded-xl border border-border bg-card overflow-hidden shadow-xs">
               {templates.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => router.push(`/admin/assessments/templates/${t.id}`)}
-                  className="flex items-center justify-between p-4 hover:bg-muted/40 cursor-pointer transition-colors"
-                >
+                <div key={t.id} onClick={() => router.push(`/admin/assessments/templates/${t.id}`)} className="flex items-center justify-between p-4 hover:bg-muted/40 cursor-pointer transition-colors">
                   <div className="space-y-1">
                     <div className="font-semibold text-xs sm:text-sm text-foreground hover:underline">{t.title}</div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground">
                       <span className="inline-flex items-center gap-1"><Layers className="size-3" /> {t.section_count} {t.section_count === 1 ? "Section" : "Sections"}</span>
-                      <span>•</span>
-                      <span>Framework: {t.framework_version || "Standard"}</span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1"><Calendar className="size-3" /> {new Date(t.created_at).toLocaleDateString()}</span>
+                      <span>•</span><span>Framework: {t.framework_version || "Standard"}</span>
+                      <span>•</span><span className="inline-flex items-center gap-1" suppressHydrationWarning><Calendar className="size-3" /> {new Date(t.created_at).toLocaleDateString("en-AU")}</span>
                     </div>
                   </div>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
@@ -101,40 +110,15 @@ export function AssessmentsAdminView({ templates, assignedAssessments, candidate
               ))}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="assigned" className="space-y-3">
-          <div className="flex justify-end">
-            <Button onClick={() => setAssignDialogOpen(true)} className="text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
-              <Plus className="size-4" /> Assign New Assessment
-            </Button>
-          </div>
-
-          {assignedAssessments.length === 0 ? (
-            <div className="p-12 text-center border border-dashed border-border rounded-xl bg-card text-muted-foreground text-sm">
-              No assessments assigned yet — assign one to a candidate.
-            </div>
-          ) : (
-            <div className="divide-y divide-border rounded-xl border border-border bg-card overflow-hidden shadow-xs">
-              {assignedAssessments.map((a) => (
-                <div key={a.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-2 hover:bg-muted/40 transition-colors">
-                  <div className="space-y-1">
-                    <div className="font-semibold text-xs sm:text-sm text-foreground">{a.candidate_name}</div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-muted-foreground">
-                      <span className="font-medium text-foreground">{a.template_title}</span>
-                      <span>•</span>
-                      <span>Examiner: {a.examiner_name}</span>
-                      <span>•</span>
-                      <span>Assigned: {new Date(a.assigned_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div className="self-start sm:self-auto">{getStatusBadge(a.status)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      ) : (
+        <AdminAssignedAssessmentsList
+          items={assignedAssessments}
+          statusFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+          pendingCount={pendingCount}
+        />
+      )}
 
       <TemplateFormDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} defaultFrameworkVersion={frameworkVersion} onSuccess={() => router.refresh()} />
       <AssignAssessmentDialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen} candidates={candidates} templates={templates.map(t => ({ id: t.id, title: t.title }))} examiners={examiners} onSuccess={() => router.refresh()} />

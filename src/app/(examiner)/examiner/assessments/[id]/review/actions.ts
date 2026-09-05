@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface SaveReviewInput {
   finalScore: number;
@@ -28,7 +29,8 @@ export async function saveQuestionReview(
 
   if (!assessment) return { error: "Not authorized to review this assessment" };
 
-  const { data: answer } = await supabase
+  const adminSupabase = createAdminClient();
+  const { data: answer } = await adminSupabase
     .from("candidate_answers")
     .select("id, ai_analyses(id)")
     .eq("id", candidateAnswerId)
@@ -37,9 +39,10 @@ export async function saveQuestionReview(
 
   if (!answer) return { error: "Candidate answer not found" };
 
-  const aiAnalysisId = (answer.ai_analyses as any)?.[0]?.id || null;
+  const aiAnalysesList = answer.ai_analyses as any;
+  const aiAnalysisId = Array.isArray(aiAnalysesList) ? aiAnalysesList[0]?.id : (aiAnalysesList?.id || null);
 
-  const { error: upsertError } = await supabase
+  const { error: upsertError } = await adminSupabase
     .from("examiner_reviews")
     .upsert(
       {
@@ -67,7 +70,8 @@ export async function getVerbalAudioUrl(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const { data: verbal } = await supabase
+  const adminSupabase = createAdminClient();
+  const { data: verbal } = await adminSupabase
     .from("verbal_answers")
     .select(`
       id,
@@ -87,7 +91,7 @@ export async function getVerbalAudioUrl(
   const assignedId = (verbal.candidate_answers as any)?.assessments?.assigned_examiner_id;
   if (assignedId !== user.id) return { error: "Not authorized to access recording" };
 
-  const { data: signed, error: signError } = await supabase.storage
+  const { data: signed, error: signError } = await adminSupabase.storage
     .from("verbal-answers")
     .createSignedUrl(verbal.audio_storage_path, 3600);
 

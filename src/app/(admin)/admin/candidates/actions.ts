@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 
 async function verifyAdmin() {
   const supabase = await createClient();
@@ -102,4 +103,33 @@ export async function reassignExaminer(
   });
 
   return { success: true };
+}
+
+export async function resetCandidatePassword(profileId: string) {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("id, organisation_id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (!target || target.organisation_id !== orgId || target.role !== "candidate") {
+    return { error: "Candidate not found or outside organisation." };
+  }
+
+  try {
+    const newPassword = generateTemporaryPassword();
+    const adminClient = createAdminClient();
+    const { error: updateErr } = await adminClient.auth.admin.updateUserById(profileId, {
+      password: newPassword,
+    });
+    if (updateErr) return { error: updateErr.message };
+
+    return { success: true, newPassword };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to reset candidate password." };
+  }
 }

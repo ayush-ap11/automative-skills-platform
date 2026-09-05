@@ -31,6 +31,8 @@ export default function SignupPage() {
       preferred_name: "",
       email: "",
       mobile: "",
+      state: "" as any,
+      invite_code: "",
       usi: "",
       password: "",
       confirm_password: "",
@@ -99,6 +101,16 @@ export default function SignupPage() {
           </select>
           {errors.state && <p className="text-xs font-medium text-destructive">{errors.state.message}</p>}
         </div>
+
+        <FormField
+          label="Organisation Invite Code"
+          name="invite_code"
+          placeholder="e.g. 8f3a9c2e"
+          helperText="Get this from the organisation you're registering with"
+          disabled={isPending}
+          error={errors.invite_code?.message}
+          register={register("invite_code")}
+        />
 
         <FormField label="USI (Optional)" name="usi" placeholder="10-digit code" helperText="Don't have a USI? Get one free at usi.gov.au — you can add it later" disabled={isPending} error={errors.usi?.message} register={register("usi")} />
         <FormField label="Password" name="password" type="password" placeholder="••••••••" autoComplete="new-password" disabled={isPending} error={errors.password?.message} register={register("password")} />

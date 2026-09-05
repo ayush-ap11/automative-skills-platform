@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckSquare, Loader2, Check, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckSquare, Loader2, Check, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { reassignExaminer } from "@/app/(admin)/admin/candidates/actions";
 
@@ -29,6 +30,7 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
 };
 
 export function AdminCandidateAssessments({ assessments, examiners }: Props) {
+  const router = useRouter();
   const [items, setItems] = useState<CandidateAssessmentItem[]>(assessments);
   const [selectedExaminer, setSelectedExaminer] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -119,6 +121,15 @@ export function AdminCandidateAssessments({ assessments, examiners }: Props) {
                       className="text-xs h-8 cursor-pointer"
                     >
                       {isSaving ? <Loader2 className="size-3 animate-spin" /> : state === "success" ? <Check className="size-3 text-[var(--success)]" /> : "Save"}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/admin/assessments/${item.id}`)}
+                      className="text-xs h-8 px-2.5 cursor-pointer"
+                    >
+                      <Eye className="size-3.5 mr-1" /> View
                     </Button>
                   </div>
                 </div>

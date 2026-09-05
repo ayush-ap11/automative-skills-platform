@@ -99,7 +99,7 @@ export function AIGovernanceView({ initialBlindMode, analyses }: Props) {
               <div key={item.id} className="p-3.5 md:grid md:grid-cols-12 md:gap-3 md:items-center space-y-2 md:space-y-0 hover:bg-muted/30 transition-colors">
                 <div className="md:col-span-3 space-y-0.5">
                   <div className="font-semibold text-foreground text-xs">{item.candidate_name}</div>
-                  <div className="text-[10px] text-muted-foreground">{new Date(item.generated_at).toLocaleDateString()}</div>
+                  <div className="text-[10px] text-muted-foreground" suppressHydrationWarning>{new Date(item.generated_at).toLocaleDateString("en-AU")}</div>
                 </div>
 
                 <div className="md:col-span-4 text-[11px] text-muted-foreground line-clamp-2 pr-2">

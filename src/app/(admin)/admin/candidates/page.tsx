@@ -84,6 +84,7 @@ export default async function AdminCandidatesPage() {
       evidence: counts,
       examinerName: latestA?.examiner?.preferred_name || latestA?.examiner?.full_name || null,
       status: latestA?.status || "not_started",
+      latestAssessmentId: latestA?.id || null,
       lastActivity: new Date(lastActivityTime).toISOString(),
     };
   });

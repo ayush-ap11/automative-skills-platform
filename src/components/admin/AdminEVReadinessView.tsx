@@ -98,8 +98,8 @@ export function AdminEVReadinessView({ categoryAverages, distribution, candidate
                       <div className="space-y-1">
                         <div className="font-semibold text-xs text-foreground hover:underline">{item.candidate_name}</div>
                         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="size-3" /> {new Date(item.generated_at).toLocaleDateString()}
+                          <span className="inline-flex items-center gap-1" suppressHydrationWarning>
+                            <Calendar className="size-3" /> {new Date(item.generated_at).toLocaleDateString("en-AU")}
                           </span>
                           <span>•</span>
                           <span>Score: <strong className="text-foreground">{Math.round(item.overall_score)}%</strong></span>

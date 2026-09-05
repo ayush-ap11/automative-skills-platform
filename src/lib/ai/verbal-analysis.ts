@@ -82,7 +82,7 @@ JSON Schema:
       criticalSafetyFlag: Boolean(raw.critical_safety_flag),
       flagReason: raw.flag_reason ? String(raw.flag_reason) : null,
       confidenceLevel: Math.round(Number(raw.confidence_level || 85)),
-      modelVersion: "gemini-1.5-flash",
+      modelVersion: "gemini-3.5-flash-lite",
     };
   } catch (err) {
     console.error("[Verbal AI Analysis Error]", err);

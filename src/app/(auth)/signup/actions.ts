@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { signupSchema, type SignupInput } from "./schema";
 
 export async function signupAction(input: SignupInput) {
@@ -18,6 +19,7 @@ export async function signupAction(input: SignupInput) {
     email,
     mobile,
     state,
+    invite_code,
     usi,
     password,
   } = validation.data;
@@ -27,7 +29,23 @@ export async function signupAction(input: SignupInput) {
   try {
     const admin = createAdminClient();
 
-    // Create user with email pre-confirmed so no verification email or magic link is sent
+    // 1. Verify organisation invite code before creating any account rows
+    const cleanCode = invite_code.trim();
+    const { data: org, error: orgErr } = await admin
+      .from("organisations")
+      .select("id")
+      .ilike("invite_code", cleanCode)
+      .maybeSingle();
+
+    if (orgErr || !org) {
+      return {
+        error: "Invalid invite code — check with your organisation.",
+      };
+    }
+
+    const orgId = org.id;
+
+    // 2. Create user with email pre-confirmed via admin client
     const { data: createData, error: createError } =
       await admin.auth.admin.createUser({
         email,
@@ -38,6 +56,7 @@ export async function signupAction(input: SignupInput) {
           preferred_name: preferred_name || null,
           mobile,
           role: "candidate",
+          organisation_id: orgId,
         },
       });
 
@@ -53,15 +72,6 @@ export async function signupAction(input: SignupInput) {
             "An account with this email address already exists. Please log in with your password.",
         };
       }
-      if (
-        msg.toLowerCase().includes("fetch failed") ||
-        msg.toLowerCase().includes("failed to fetch")
-      ) {
-        return {
-          error:
-            "Unable to reach Supabase project (fetch failed). Please check that your Supabase project is active and unpaused.",
-        };
-      }
       return {
         error: createError?.message || "Failed to create candidate account.",
       };
@@ -69,10 +79,23 @@ export async function signupAction(input: SignupInput) {
 
     userId = createData.user.id;
 
-    // Update profile with state and details
+    // 3. Establish session with normal server client
+    const supabase = await createClient();
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInErr) {
+      return {
+        error: signInErr.message || "Failed to sign in after registration.",
+      };
+    }
+
+    // 4. Update profile with organisation_id and details
     await admin
       .from("profiles")
       .update({
+        organisation_id: orgId,
         state,
         preferred_name: preferred_name || null,
         mobile,
@@ -80,12 +103,13 @@ export async function signupAction(input: SignupInput) {
       })
       .eq("id", userId);
 
-    // Upsert candidate profile
+    // 5. Upsert candidate profile with organisation_id
     const { data: candProfile } = await admin
       .from("candidate_profiles")
       .upsert(
         {
           profile_id: userId,
+          organisation_id: orgId,
           usi: usi || null,
         },
         { onConflict: "profile_id" }
@@ -93,7 +117,7 @@ export async function signupAction(input: SignupInput) {
       .select("id")
       .maybeSingle();
 
-    // Record privacy notice consent
+    // 6. Record privacy notice consent
     if (candProfile?.id) {
       await admin.from("consents").insert({
         candidate_profile_id: candProfile.id,
@@ -102,11 +126,14 @@ export async function signupAction(input: SignupInput) {
       });
     }
   } catch (err: any) {
+    if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+      throw err;
+    }
     return {
       error: err?.message || "Unexpected error during registration.",
     };
   }
 
-  // Seamlessly redirect candidate to log in with their email and password
-  redirect(`/login?registered=true&email=${encodeURIComponent(email)}`);
+  // Redirect directly to candidate dashboard
+  redirect("/candidate/dashboard");
 }

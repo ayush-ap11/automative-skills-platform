@@ -32,8 +32,22 @@ function DropdownMenuContent({
 function DropdownMenuGroup({ ...props }: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
-function DropdownMenuLabel({ className, inset, ...props }: MenuPrimitive.GroupLabel.Props & { inset?: boolean }) {
-  return <MenuPrimitive.GroupLabel data-slot="dropdown-menu-label" data-inset={inset} className={cn("px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7", className)} {...props} />;
+function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<"div"> & { inset?: boolean }) {
+  return (
+    <div
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(
+        "px-2 py-1.5 text-xs font-semibold text-muted-foreground data-inset:pl-7",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 function DropdownMenuItem({ className, inset, variant = "default", ...props }: MenuPrimitive.Item.Props & { inset?: boolean; variant?: "default" | "destructive" }) {
   return (

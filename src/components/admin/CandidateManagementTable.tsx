@@ -1,8 +1,7 @@
 "use client";
-
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, X, Zap, Users } from "lucide-react";
+import { Search, Filter, X, Zap, Users, ExternalLink } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { AU_STATES, AU_STATE_NAMES, getStateFullName } from "@/app/(auth)/signup/schema";
@@ -11,7 +10,8 @@ export interface AdminCandidateItem {
   id: string; name: string; email: string; state: string | null; currentRole: string | null;
   yearsExperience: number | null; evExperience: boolean; latestScore: number | null;
   evReadiness: { score: number | null; status: string | null } | null;
-  evidence: { verified: number; total: number }; examinerName: string | null; status: string; lastActivity: string;
+  evidence: { verified: number; total: number }; examinerName: string | null; status: string;
+  latestAssessmentId?: string | null; lastActivity: string;
 }
 
 interface Props {
@@ -19,9 +19,7 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  completed: { label: "Completed", cls: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30" }, under_review: { label: "Under Review", cls: "bg-primary/10 text-primary border-primary/30" },
-  submitted: { label: "Submitted", cls: "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30" }, in_progress: { label: "In Progress", cls: "bg-primary/10 text-primary border-primary/30" },
-  not_started: { label: "Not Started", cls: "bg-muted text-muted-foreground border-border" },
+  completed: { label: "Completed", cls: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30" }, under_review: { label: "Under Review", cls: "bg-primary/10 text-primary border-primary/30" }, submitted: { label: "Submitted", cls: "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30" }, in_progress: { label: "In Progress", cls: "bg-primary/10 text-primary border-primary/30" }, not_started: { label: "Not Started", cls: "bg-muted text-muted-foreground border-border" },
 };
 
 export function CandidateManagementTable({ candidates, examiners }: Props) {
@@ -48,14 +46,12 @@ export function CandidateManagementTable({ candidates, examiners }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search by name, email, or role..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary" />
+          <input type="text" placeholder="Search by name, email, or role..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-border bg-card focus:outline-none focus:ring-1 focus:ring-primary" />
         </div>
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger render={<Button variant="outline" size="sm" className="gap-1.5 text-xs cursor-pointer" />}>
-              <Filter className="size-3.5" />
-              <span>Filters</span>
+              <Filter className="size-3.5" /><span>Filters</span>
               {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] text-primary-foreground font-bold">{activeFilters}</span>}
             </PopoverTrigger>
             <PopoverContent className="w-80 p-4 space-y-3" align="end">
@@ -67,8 +63,7 @@ export function CandidateManagementTable({ candidates, examiners }: Props) {
                 <div>
                   <label className="text-[11px] font-medium text-muted-foreground block mb-0.5">State</label>
                   <select value={filters.state} onChange={(e) => setFilters(p => ({ ...p, state: e.target.value }))} className="w-full rounded border border-border bg-background p-1 cursor-pointer">
-                    <option value="all">All States</option>
-                    {AU_STATES.map((s) => <option key={s} value={s}>{AU_STATE_NAMES[s]}</option>)}
+                    <option value="all">All States</option>{AU_STATES.map((s) => <option key={s} value={s}>{AU_STATE_NAMES[s]}</option>)}
                   </select>
                 </div>
                 <div>
@@ -80,15 +75,13 @@ export function CandidateManagementTable({ candidates, examiners }: Props) {
                 <div>
                   <label className="text-[11px] font-medium text-muted-foreground block mb-0.5">Assessment Status</label>
                   <select value={filters.status} onChange={(e) => setFilters(p => ({ ...p, status: e.target.value }))} className="w-full rounded border border-border bg-background p-1 cursor-pointer">
-                    <option value="all">All Statuses</option>
-                    {Object.keys(STATUS_CONFIG).map((k) => <option key={k} value={k}>{STATUS_CONFIG[k].label}</option>)}
+                    <option value="all">All Statuses</option>{Object.keys(STATUS_CONFIG).map((k) => <option key={k} value={k}>{STATUS_CONFIG[k].label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-[11px] font-medium text-muted-foreground block mb-0.5">Examiner</label>
                   <select value={filters.examiner} onChange={(e) => setFilters(p => ({ ...p, examiner: e.target.value }))} className="w-full rounded border border-border bg-background p-1 cursor-pointer">
-                    <option value="all">All Examiners</option>
-                    {examiners.map((ex) => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+                    <option value="all">All Examiners</option>{examiners.map((ex) => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
                   </select>
                 </div>
                 <div>
@@ -126,7 +119,7 @@ export function CandidateManagementTable({ candidates, examiners }: Props) {
                   const sInfo = STATUS_CONFIG[c.status] || { label: c.status, cls: "bg-muted text-muted-foreground border-border" };
                   return (
                     <tr key={c.id} onClick={() => router.push(`/admin/candidates/${c.id}`)} className="hover:bg-muted/40 cursor-pointer transition-colors">
-                      <td className="p-3"><div className="font-semibold text-foreground">{c.name}</div><div className="text-[11px] text-muted-foreground">{c.email}</div></td>
+                      <td className="p-3"><div className="font-semibold text-foreground hover:text-primary transition-colors">{c.name}</div><div className="text-[11px] text-muted-foreground">{c.email}</div></td>
                       <td className="p-3"><div className="font-medium text-foreground">{c.currentRole || "—"}</div><div className="text-[11px] text-muted-foreground">{getStateFullName(c.state) || "—"}</div></td>
                       <td className="p-3 font-medium">{c.yearsExperience !== null ? `${c.yearsExperience}y` : "—"}</td>
                       <td className="p-3">{c.evExperience ? <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--success)]"><Zap className="size-3" /> Yes</span> : "No"}</td>
@@ -134,8 +127,16 @@ export function CandidateManagementTable({ candidates, examiners }: Props) {
                       <td className="p-3">{c.evReadiness?.status ? <span className="capitalize text-[11px] font-medium">{c.evReadiness.status.replace(/_/g, " ")}</span> : "—"}</td>
                       <td className="p-3 text-[11px] text-muted-foreground">{c.evidence.verified}/{c.evidence.total} verified</td>
                       <td className="p-3 text-foreground">{c.examinerName || <span className="text-muted-foreground italic">Unassigned</span>}</td>
-                      <td className="p-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${sInfo.cls}`}>{sInfo.label}</span></td>
-                      <td className="p-3 text-right text-muted-foreground text-[11px]">{new Date(c.lastActivity).toLocaleDateString()}</td>
+                      <td className="p-3">
+                        {c.latestAssessmentId ? (
+                          <button type="button" onClick={(e) => { e.stopPropagation(); router.push(`/admin/assessments/${c.latestAssessmentId}`); }} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border cursor-pointer hover:opacity-80 transition ${sInfo.cls}`} title="Click to view assessment details">
+                            {sInfo.label} <ExternalLink className="size-2.5 opacity-60" />
+                          </button>
+                        ) : (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${sInfo.cls}`}>{sInfo.label}</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right text-muted-foreground text-[11px]" suppressHydrationWarning>{new Date(c.lastActivity).toLocaleDateString("en-AU")}</td>
                     </tr>
                   );
                 })}

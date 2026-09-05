@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Wrench, Settings, LogOut, Shield } from "lucide-react";
+import { Wrench, User, Settings, LogOut, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -82,9 +82,13 @@ export function TopBar({
               <p className="text-[10px] font-medium text-primary mt-0.5">{organisationName}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/admin/profile")} className="cursor-pointer gap-2 text-xs">
+              <User className="size-4" />
+              <span>My Profile</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/admin/settings")} className="cursor-pointer gap-2 text-xs">
               <Settings className="size-4" />
-              <span>Platform Settings</span>
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

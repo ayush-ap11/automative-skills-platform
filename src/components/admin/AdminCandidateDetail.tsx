@@ -1,28 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Award, Briefcase, Zap, Shield, CheckCircle2, User } from "lucide-react";
+import { ArrowLeft, Zap, User, KeyRound, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminCandidateDocuments, DocumentItem } from "@/components/admin/AdminCandidateDocuments";
 import { AdminCandidateAssessments, CandidateAssessmentItem } from "@/components/admin/AdminCandidateAssessments";
+import { AdminCandidateExperience, QualificationItem, EmploymentHistoryItem } from "@/components/admin/AdminCandidateExperience";
+import { OneTimePasswordPanel } from "@/components/admin/OneTimePasswordPanel";
+import { resetCandidatePassword } from "@/app/(admin)/admin/candidates/actions";
 import { getStateFullName } from "@/app/(auth)/signup/schema";
 
-export interface QualificationItem {
-  id: string;
-  qualification_name: string;
-  issuing_body: string | null;
-  issue_date: string | null;
-  verified: boolean;
-}
-
-export interface EmploymentHistoryItem {
-  id: string;
-  employer_name: string | null;
-  role_title: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  description: string | null;
-  source: string;
-}
+export type { QualificationItem, EmploymentHistoryItem };
 
 export interface AdminCandidateDetailData {
   id: string;
@@ -48,6 +38,22 @@ interface Props {
 }
 
 export function AdminCandidateDetail({ candidate, examiners }: Props) {
+  const [resetting, setResetting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<string | null>(null);
+
+  const handleResetPassword = async () => {
+    setResetting(true);
+    setErrorMsg(null);
+    const res = await resetCandidatePassword(candidate.id);
+    setResetting(false);
+    if (res.error) {
+      setErrorMsg(res.error);
+    } else if (res.newPassword) {
+      setNewPassword(res.newPassword);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -55,6 +61,13 @@ export function AdminCandidateDetail({ candidate, examiners }: Props) {
           <ArrowLeft className="size-4" /> Back to Candidates
         </Link>
       </div>
+
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {/* Header */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
@@ -73,6 +86,18 @@ export function AdminCandidateDetail({ candidate, examiners }: Props) {
               </div>
             </div>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleResetPassword}
+            disabled={resetting}
+            className="cursor-pointer text-amber-600 border-amber-500/30 hover:bg-amber-500/10 text-xs self-start sm:self-auto"
+          >
+            {resetting ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <KeyRound className="size-3.5 mr-1.5" />}
+            Reset Password
+          </Button>
         </div>
 
         {/* Technical Domain Badges */}
@@ -90,72 +115,33 @@ export function AdminCandidateDetail({ candidate, examiners }: Props) {
       </div>
 
       {/* Qualifications & Employment Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Qualifications */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <div className="flex items-center gap-2">
-              <Award className="size-4 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">Qualifications & Accreditations</h3>
-            </div>
-            <span className="text-xs text-muted-foreground">{candidate.qualifications.length}</span>
-          </div>
-
-          {candidate.qualifications.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-2">No formal qualifications listed.</p>
-          ) : (
-            <div className="divide-y divide-border/60">
-              {candidate.qualifications.map((q) => (
-                <div key={q.id} className="py-2 flex items-center justify-between gap-2">
-                  <div>
-                    <div className="text-xs font-semibold text-foreground">{q.qualification_name}</div>
-                    <div className="text-[11px] text-muted-foreground">{q.issuing_body || "Registered Body"} {q.issue_date && `(${q.issue_date})`}</div>
-                  </div>
-                  {q.verified ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--success)]"><CheckCircle2 className="size-3" /> Verified</span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Unverified</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Employment History */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <div className="flex items-center gap-2">
-              <Briefcase className="size-4 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">Employment History</h3>
-            </div>
-            <span className="text-xs text-muted-foreground">{candidate.employmentHistory.length}</span>
-          </div>
-
-          {candidate.employmentHistory.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-2">No employment history entered.</p>
-          ) : (
-            <div className="divide-y divide-border/60">
-              {candidate.employmentHistory.map((emp) => (
-                <div key={emp.id} className="py-2 space-y-0.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-foreground">{emp.role_title || "Technician"}</span>
-                    <span className="text-[11px] text-muted-foreground">{emp.start_date || "Past"} - {emp.end_date || "Present"}</span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground font-medium">{emp.employer_name || "Workshop"}</div>
-                  {emp.description && <p className="text-[11px] text-muted-foreground line-clamp-2">{emp.description}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <AdminCandidateExperience
+        qualifications={candidate.qualifications}
+        employmentHistory={candidate.employmentHistory}
+      />
 
       {/* Documents */}
       <AdminCandidateDocuments documents={candidate.documents} />
 
       {/* Assessments */}
       <AdminCandidateAssessments assessments={candidate.assessments} examiners={examiners} />
+
+      {/* One-Time Password Reveal Dialog */}
+      <Dialog open={!!newPassword} onOpenChange={(open) => !open && setNewPassword(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Temporary Password Generated</DialogTitle>
+          </DialogHeader>
+          {newPassword && (
+            <OneTimePasswordPanel
+              email={candidate.email}
+              password={newPassword}
+              roleLabel="candidate"
+              onDone={() => setNewPassword(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

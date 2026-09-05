@@ -26,10 +26,8 @@ const PRIMARY_MOBILE_ITEMS = [
 ];
 
 const MORE_MOBILE_ITEMS = [
-  { label: "My Profile", href: "/profile", icon: User },
   { label: "Feedback", href: "/feedback", icon: MessageSquareQuote },
   { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function MobileNav() {
