@@ -1,6 +1,7 @@
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import { FormField } from "@/components/shared/FormField";
-import { AU_STATES } from "@/app/(auth)/signup/schema";
+import { AustralianPhoneInput } from "@/components/shared/AustralianPhoneInput";
+import { AU_STATES, AU_STATE_NAMES } from "@/app/(auth)/signup/schema";
 import type { ProfileFormValues } from "@/app/(candidate)/profile/schema";
 
 interface PersonalDetailsSectionProps {
@@ -15,7 +16,7 @@ export function PersonalDetailsSection({
   disabled,
 }: PersonalDetailsSectionProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6 space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-xs sm:p-6 space-y-4">
       <div className="border-b border-border pb-3">
         <h2 className="text-base font-bold text-foreground">1. Personal Details</h2>
         <p className="text-xs text-muted-foreground">
@@ -51,14 +52,13 @@ export function PersonalDetailsSection({
           register={register("email")}
         />
 
-        <FormField
+        <AustralianPhoneInput
           label="Mobile Number"
           name="mobile"
-          type="tel"
           placeholder="0400 000 000"
           disabled={disabled}
           error={errors.mobile?.message}
-          register={register("mobile")}
+          register={register("mobile") as any}
         />
 
         <div className="space-y-1.5">
@@ -78,7 +78,7 @@ export function PersonalDetailsSection({
           >
             {AU_STATES.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {AU_STATE_NAMES[s]}
               </option>
             ))}
           </select>

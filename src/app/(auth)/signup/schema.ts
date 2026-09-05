@@ -11,6 +11,24 @@ export const AU_STATES = [
   "NT",
 ] as const;
 
+export type AuState = (typeof AU_STATES)[number];
+
+export const AU_STATE_NAMES: Record<AuState, string> = {
+  NSW: "New South Wales",
+  VIC: "Victoria",
+  QLD: "Queensland",
+  WA: "Western Australia",
+  SA: "South Australia",
+  TAS: "Tasmania",
+  ACT: "Australian Capital Territory",
+  NT: "Northern Territory",
+};
+
+export function getStateFullName(code?: string | null): string {
+  if (!code) return "";
+  return (AU_STATE_NAMES as Record<string, string>)[code] || code;
+}
+
 export const signupSchema = z
   .object({
     full_name: z

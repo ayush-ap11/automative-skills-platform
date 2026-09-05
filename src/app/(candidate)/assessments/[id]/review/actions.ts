@@ -1,24 +1,14 @@
 "use server";
 
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface SubmitAssessmentResult {
   success?: boolean;
   error?: string;
   message?: string;
   missingSections?: string[];
-}
-
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Missing Supabase service role credentials.");
-  }
-  return createSupabaseClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 }
 
 export async function submitAssessment(assessmentId: string): Promise<SubmitAssessmentResult> {
@@ -41,8 +31,10 @@ export async function submitAssessment(assessmentId: string): Promise<SubmitAsse
     return { error: "unauthorized", message: "Candidate profile not found." };
   }
 
+  const adminClient = createAdminClient();
+
   // 1. Verify assessment ownership & status
-  const { data: assessment } = await supabase
+  const { data: assessment } = await adminClient
     .from("assessments")
     .select("id, status, template_id, candidate_profile_id, assigned_examiner_id")
     .eq("id", assessmentId)
@@ -52,33 +44,45 @@ export async function submitAssessment(assessmentId: string): Promise<SubmitAsse
     return { error: "unauthorized", message: "Assessment record not found." };
   }
 
-  if (assessment.status !== "in_progress") {
+  if (["submitted", "under_review", "completed"].includes(assessment.status)) {
     return {
       error: "invalid_status",
-      message: "Assessment cannot be submitted (already submitted or not in progress).",
+      message: "Assessment has already been submitted.",
     };
   }
 
   // 2. Server-side mandatory questions re-check
-  const { data: sections } = await supabase
+  const { data: sections } = await adminClient
     .from("assessment_sections")
     .select("id, title, order_index")
     .eq("template_id", assessment.template_id)
     .order("order_index", { ascending: true });
 
   const sectionIds = (sections || []).map((s) => s.id);
-  const { data: mandatoryQuestions } = await supabase
+  const { data: mandatoryQuestions } = await adminClient
     .from("questions")
     .select("id, section_id, mandatory")
     .in("section_id", sectionIds)
     .eq("mandatory", true);
 
-  const { data: answers } = await supabase
+  const { data: answers } = await adminClient
     .from("candidate_answers")
-    .select("question_id")
+    .select("question_id, selected_option_ids, answer_text, verbal_answers(id)")
     .eq("assessment_id", assessmentId);
 
-  const answeredIds = new Set((answers || []).map((a) => a.question_id));
+  const answeredIds = new Set(
+    (answers || [])
+      .filter(
+        (a: any) =>
+          (a.selected_option_ids && a.selected_option_ids.length > 0) ||
+          (a.answer_text && a.answer_text.trim().length > 0) ||
+          (a.verbal_answers &&
+            (Array.isArray(a.verbal_answers)
+              ? a.verbal_answers.length > 0
+              : !!a.verbal_answers?.id))
+      )
+      .map((a: any) => a.question_id)
+  );
   const missingSections: string[] = [];
 
   for (const sec of sections || []) {
@@ -94,14 +98,11 @@ export async function submitAssessment(assessmentId: string): Promise<SubmitAsse
   }
 
   // 3. Atomically update assessment status and log submission
-  const adminClient = getAdminClient();
-  const submittedAt = new Date().toISOString();
-
   const { data: updated, error: updateError } = await adminClient
     .from("assessments")
-    .update({ status: "submitted", submitted_at: submittedAt })
+    .update({ status: "submitted" })
     .eq("id", assessmentId)
-    .eq("status", "in_progress")
+    .in("status", ["in_progress", "not_started"])
     .select("id")
     .maybeSingle();
 
@@ -130,8 +131,13 @@ export async function submitAssessment(assessmentId: string): Promise<SubmitAsse
     entity_type: "assessments",
     entity_id: assessmentId,
     previous_value: { status: assessment.status },
-    new_value: { status: "submitted", submitted_at: submittedAt },
+    new_value: { status: "submitted" },
   });
+
+  revalidatePath("/assessments");
+  revalidatePath(`/assessments/${assessmentId}/review`);
+  revalidatePath(`/assessments/${assessmentId}/status`);
+  revalidatePath("/candidate/dashboard");
 
   return { success: true };
 }

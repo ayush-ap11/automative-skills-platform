@@ -13,6 +13,8 @@ import { loginAction } from "./actions";
 function LoginForm() {
   const searchParams = useSearchParams();
   const resetSuccess = searchParams.get("reset") === "success";
+  const registeredSuccess = searchParams.get("registered") === "true";
+  const defaultEmail = searchParams.get("email") || "";
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -24,7 +26,7 @@ function LoginForm() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      email: defaultEmail,
       password: "",
     },
   });
@@ -48,6 +50,13 @@ function LoginForm() {
           Enter your credentials to access your assessment dashboard.
         </p>
       </div>
+
+      {registeredSuccess && (
+        <div className="flex items-center gap-2 rounded-md border border-success/30 bg-success/10 p-3 text-xs font-medium text-success">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>Account created successfully! Please log in with your password.</span>
+        </div>
+      )}
 
       {resetSuccess && (
         <div className="flex items-center gap-2 rounded-md border border-success/30 bg-success/10 p-3 text-xs font-medium text-success">

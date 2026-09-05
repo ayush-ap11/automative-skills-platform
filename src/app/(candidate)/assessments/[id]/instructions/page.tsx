@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AssessmentInstructions, SectionItem } from "@/components/candidate/AssessmentInstructions";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,9 @@ export default async function AssessmentInstructionsPage({ params }: Instruction
 
   if (!candidateProfile) redirect("/assessments");
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
     .select("id, template_id, status, candidate_profile_id, assessment_templates(title, framework_version)")
     .eq("id", id)
@@ -33,7 +36,7 @@ export default async function AssessmentInstructionsPage({ params }: Instruction
     redirect("/assessments");
   }
 
-  const { data: rawSections } = await supabase
+  const { data: rawSections } = await adminClient
     .from("assessment_sections")
     .select("id, title, order_index")
     .eq("template_id", assessment.template_id)
@@ -48,7 +51,7 @@ export default async function AssessmentInstructionsPage({ params }: Instruction
   const sectionIds = sections.map((s) => s.id);
   let hasVerbalQuestions = false;
   if (sectionIds.length > 0) {
-    const { data: verbal } = await supabase
+    const { data: verbal } = await adminClient
       .from("questions")
       .select("id")
       .in("section_id", sectionIds)

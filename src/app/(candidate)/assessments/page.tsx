@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AssessmentList, AssessmentItem } from "@/components/candidate/AssessmentList";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,9 @@ export default async function AssessmentsPage() {
     redirect("/candidate/dashboard");
   }
 
-  const { data: rawAssessments } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: rawAssessments } = await adminClient
     .from("assessments")
     .select("id, template_id, status, assigned_at, overall_score, assessment_templates(title, framework_version)")
     .eq("candidate_profile_id", candidateProfile.id);

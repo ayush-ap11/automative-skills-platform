@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function startAssessment(assessmentId: string) {
   const supabase = await createClient();
@@ -33,7 +34,8 @@ export async function startAssessment(assessmentId: string) {
   }
 
   if (assessment.status === "not_started") {
-    const { error: updateErr } = await supabase
+    const adminClient = createAdminClient();
+    const { error: updateErr } = await adminClient
       .from("assessments")
       .update({ status: "in_progress" })
       .eq("id", assessmentId);

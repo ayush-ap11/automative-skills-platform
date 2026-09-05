@@ -1,16 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-
-const NON_VERBAL_TYPES = [
-  "multiple_choice",
-  "multiple_answer",
-  "true_false",
-  "scenario",
-  "short_answer",
-  "image_based",
-];
 
 interface TakePageProps {
   params: Promise<{ id: string }>;
@@ -31,9 +23,11 @@ export default async function TakeAssessmentPage({ params }: TakePageProps) {
 
   if (!cp) redirect("/assessments");
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
-    .select("id, template_id, candidate_profile_id")
+    .select("id, status, template_id, candidate_profile_id")
     .eq("id", id)
     .single();
 
@@ -41,34 +35,45 @@ export default async function TakeAssessmentPage({ params }: TakePageProps) {
     redirect("/assessments");
   }
 
-  const { data: sections } = await supabase
+  // Ensure assessment status is marked in_progress
+  if (assessment.status === "not_started") {
+    await adminClient
+      .from("assessments")
+      .update({ status: "in_progress" })
+      .eq("id", id);
+  }
+
+  const { data: sections } = await adminClient
     .from("assessment_sections")
     .select("id, order_index")
     .eq("template_id", assessment.template_id)
     .order("order_index", { ascending: true });
 
-  const { data: answers } = await supabase
+  const { data: answers } = await adminClient
     .from("candidate_answers")
-    .select("question_id, selected_option_ids, answer_text")
+    .select("question_id, selected_option_ids, answer_text, verbal_answers(id)")
     .eq("assessment_id", id);
 
   const answeredIds = new Set(
     (answers || [])
       .filter(
-        (a) =>
+        (a: any) =>
           (a.selected_option_ids && a.selected_option_ids.length > 0) ||
-          (a.answer_text && a.answer_text.trim().length > 0)
+          (a.answer_text && a.answer_text.trim().length > 0) ||
+          (a.verbal_answers &&
+            (Array.isArray(a.verbal_answers)
+              ? a.verbal_answers.length > 0
+              : !!a.verbal_answers?.id))
       )
-      .map((a) => a.question_id)
+      .map((a: any) => a.question_id)
   );
 
   for (const sec of sections || []) {
-    const { data: questions } = await supabase
+    const { data: questions } = await adminClient
       .from("questions")
       .select("id")
       .eq("section_id", sec.id)
-      .eq("mandatory", true)
-      .in("question_type", NON_VERBAL_TYPES);
+      .eq("mandatory", true);
 
     const hasUnanswered = (questions || []).some((q) => !answeredIds.has(q.id));
     if (hasUnanswered) {
@@ -78,3 +83,4 @@ export default async function TakeAssessmentPage({ params }: TakePageProps) {
 
   redirect(`/assessments/${id}/review`);
 }
+

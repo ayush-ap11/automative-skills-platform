@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function saveAnswer(
   assessmentId: string,
@@ -14,15 +15,21 @@ export async function saveAnswer(
   const { data: cp } = await supabase.from("candidate_profiles").select("id").eq("profile_id", user.id).single();
   if (!cp) return { error: "Candidate profile not found" };
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
-    .select("id, candidate_profile_id")
+    .select("id, status, candidate_profile_id")
     .eq("id", assessmentId)
     .eq("candidate_profile_id", cp.id)
     .single();
   if (!assessment) return { error: "Assessment unauthorized or not found" };
 
-  const { data: question } = await supabase
+  if (assessment.status === "not_started") {
+    await adminClient.from("assessments").update({ status: "in_progress" }).eq("id", assessmentId);
+  }
+
+  const { data: question } = await adminClient
     .from("questions")
     .select("id, question_type, marks, question_options(id, is_correct)")
     .eq("id", questionId)
@@ -78,25 +85,31 @@ export async function completeSection(assessmentId: string, sectionId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Authentication required" };
 
-  const { data: questions } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: questions } = await adminClient
     .from("questions")
     .select("id, mandatory")
     .eq("section_id", sectionId)
     .eq("mandatory", true);
 
-  const { data: answers } = await supabase
+  const { data: answers } = await adminClient
     .from("candidate_answers")
-    .select("question_id, selected_option_ids, answer_text")
+    .select("question_id, selected_option_ids, answer_text, verbal_answers(id)")
     .eq("assessment_id", assessmentId);
 
   const answerMap = new Map((answers || []).map((a) => [a.question_id, a]));
   const missingQuestionIds: string[] = [];
 
   for (const q of questions || []) {
-    const ans = answerMap.get(q.id);
+    const ans: any = answerMap.get(q.id);
     const hasOptions = (ans?.selected_option_ids || []).length > 0;
     const hasText = Boolean(ans?.answer_text && ans.answer_text.trim().length > 0);
-    if (!ans || (!hasOptions && !hasText)) {
+    const hasVerbal = Boolean(
+      ans?.verbal_answers &&
+        (Array.isArray(ans.verbal_answers) ? ans.verbal_answers.length > 0 : !!ans.verbal_answers?.id)
+    );
+    if (!ans || (!hasOptions && !hasText && !hasVerbal)) {
       missingQuestionIds.push(q.id);
     }
   }

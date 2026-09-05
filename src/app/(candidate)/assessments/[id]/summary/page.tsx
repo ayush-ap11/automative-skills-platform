@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, AlertCircle, ArrowLeft, FileText, MessageSquare, Zap, Award, Layers } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,9 @@ export default async function AssessmentSummaryPage({ params }: SummaryPageProps
 
   if (!candidateProfile) redirect("/assessments");
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
     .select("id, status, outcome, overall_score, ev_readiness_score, completed_at, assigned_at, candidate_profile_id, assessment_templates(title, framework_version)")
     .eq("id", id)

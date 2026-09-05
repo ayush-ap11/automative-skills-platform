@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { analyzeVerbalAnswer } from "@/lib/ai/verbal-analysis";
 
 export async function submitVerbalAnswer(formData: FormData) {
   const supabase = await createClient();
@@ -17,29 +19,31 @@ export async function submitVerbalAnswer(formData: FormData) {
     return { error: "No audio recording provided." };
   }
 
-  const { data: cp } = await supabase.from("candidate_profiles").select("id").eq("profile_id", user.id).single();
+  const adminClient = createAdminClient();
+  const { data: cp } = await adminClient.from("candidate_profiles").select("id").eq("profile_id", user.id).single();
   if (!cp) return { error: "Candidate profile not found" };
 
-  const { data: assessment } = await supabase
+  const { data: assessment } = await adminClient
     .from("assessments")
-    .select("id, candidate_profile_id")
+    .select("id, status")
     .eq("id", assessmentId)
     .eq("candidate_profile_id", cp.id)
     .single();
   if (!assessment) return { error: "Assessment unauthorized or not found" };
 
+  if (assessment.status === "not_started") {
+    await adminClient.from("assessments").update({ status: "in_progress" }).eq("id", assessmentId);
+  }
+
   const storagePath = `${cp.id}/${assessmentId}/${questionId}.webm`;
   const buffer = Buffer.from(await audioFile.arrayBuffer());
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await adminClient.storage
     .from("verbal-answers")
-    .upload(storagePath, buffer, {
-      contentType: audioFile.type || "audio/webm",
-      upsert: true,
-    });
+    .upload(storagePath, buffer, { contentType: audioFile.type || "audio/webm", upsert: true });
   if (uploadError) return { error: uploadError.message };
 
-  const { data: existingCA } = await supabase
+  const { data: existingCA } = await adminClient
     .from("candidate_answers")
     .select("id")
     .eq("assessment_id", assessmentId)
@@ -48,22 +52,18 @@ export async function submitVerbalAnswer(formData: FormData) {
 
   let candidateAnswerId = existingCA?.id;
   if (!candidateAnswerId) {
-    const { data: newCA, error: caError } = await supabase
+    const { data: newCA, error: caError } = await adminClient
       .from("candidate_answers")
-      .insert({
-        assessment_id: assessmentId,
-        question_id: questionId,
-        answered_at: new Date().toISOString(),
-      })
+      .insert({ assessment_id: assessmentId, question_id: questionId, answered_at: new Date().toISOString() })
       .select("id")
       .single();
     if (caError || !newCA) return { error: caError?.message || "Failed to save answer record" };
     candidateAnswerId = newCA.id;
   } else {
-    await supabase.from("candidate_answers").update({ answered_at: new Date().toISOString() }).eq("id", candidateAnswerId);
+    await adminClient.from("candidate_answers").update({ answered_at: new Date().toISOString() }).eq("id", candidateAnswerId);
   }
 
-  const { data: existingVA } = await supabase
+  const { data: existingVA } = await adminClient
     .from("verbal_answers")
     .select("id")
     .eq("candidate_answer_id", candidateAnswerId)
@@ -71,42 +71,59 @@ export async function submitVerbalAnswer(formData: FormData) {
 
   let verbalAnswerId = existingVA?.id;
   if (existingVA) {
-    const { error: vaErr } = await supabase
-      .from("verbal_answers")
-      .update({
-        audio_storage_path: storagePath,
-        duration_seconds: durationSeconds,
-        recorded_at: new Date().toISOString(),
-      })
-      .eq("id", existingVA.id);
-    if (vaErr) return { error: vaErr.message };
+    await adminClient.from("verbal_answers").update({
+      audio_storage_path: storagePath, duration_seconds: durationSeconds, recorded_at: new Date().toISOString(),
+    }).eq("id", existingVA.id);
   } else {
-    const { data: newVA, error: vaErr } = await supabase
+    const { data: newVA, error: vaErr } = await adminClient
       .from("verbal_answers")
-      .insert({
-        candidate_answer_id: candidateAnswerId,
-        audio_storage_path: storagePath,
-        duration_seconds: durationSeconds,
-      })
+      .insert({ candidate_answer_id: candidateAnswerId, audio_storage_path: storagePath, duration_seconds: durationSeconds })
       .select("id")
       .single();
     if (vaErr || !newVA) return { error: vaErr?.message || "Failed to save verbal recording" };
     verbalAnswerId = newVA.id;
   }
 
-  // TODO: transcription pipeline wired in a later step
-  const { data: existingTranscript } = await supabase
-    .from("transcripts")
-    .select("id")
-    .eq("verbal_answer_id", verbalAnswerId)
+  const { data: existingT } = await adminClient.from("transcripts").select("id").eq("verbal_answer_id", verbalAnswerId).maybeSingle();
+  let transcriptId = existingT?.id;
+  if (!transcriptId) {
+    const { data: newT } = await adminClient.from("transcripts").insert({ verbal_answer_id: verbalAnswerId }).select("id").single();
+    transcriptId = newT?.id;
+  }
+
+  const { data: question } = await adminClient
+    .from("questions")
+    .select("question_text, safety_critical, marks")
+    .eq("id", questionId)
     .maybeSingle();
 
-  if (!existingTranscript) {
-    await supabase.from("transcripts").insert({
-      verbal_answer_id: verbalAnswerId,
-      transcript_text: null,
-      confidence: null,
-    });
+  if (question) {
+    const analysis = await analyzeVerbalAnswer(
+      buffer,
+      audioFile.type || "audio/webm",
+      question.question_text,
+      Boolean(question.safety_critical),
+      Number(question.marks) || 10
+    );
+
+    if (analysis) {
+      if (transcriptId) {
+        await adminClient.from("transcripts").update({
+          transcript_text: analysis.transcript,
+          confidence: analysis.transcriptConfidence,
+        }).eq("id", transcriptId);
+      }
+
+      await adminClient.from("ai_analyses").delete().eq("candidate_answer_id", candidateAnswerId);
+      await adminClient.from("ai_analyses").insert({
+        candidate_answer_id: candidateAnswerId,
+        technical_score: analysis.technicalScore, safety_score: analysis.safetyScore,
+        diagnostic_reasoning_score: analysis.diagnosticReasoningScore, communication_score: analysis.communicationScore,
+        completeness_score: analysis.completenessScore, provisional_score: analysis.provisionalScore,
+        critical_safety_flag: analysis.criticalSafetyFlag, flag_reason: analysis.flagReason,
+        model_version: analysis.modelVersion, confidence_level: analysis.confidenceLevel,
+      });
+    }
   }
 
   revalidatePath(`/assessments/${assessmentId}/section`);
@@ -118,10 +135,8 @@ export async function getVerbalAudioUrl(storagePath: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Authentication required" };
 
-  const { data, error } = await supabase.storage
-    .from("verbal-answers")
-    .createSignedUrl(storagePath, 3600);
-
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient.storage.from("verbal-answers").createSignedUrl(storagePath, 3600);
   if (error || !data?.signedUrl) return { error: error?.message || "Failed to retrieve audio" };
   return { success: true, signedUrl: data.signedUrl };
 }

@@ -6,17 +6,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertCircle } from "lucide-react";
 import { FormField } from "@/components/shared/FormField";
+import { AustralianPhoneInput } from "@/components/shared/AustralianPhoneInput";
 import {
   signupSchema,
   type SignupInput,
   AU_STATES,
+  AU_STATE_NAMES,
 } from "./schema";
 import { signupAction } from "./actions";
-import { SignupSuccessCard } from "./SignupSuccessCard";
 
 export default function SignupPage() {
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -46,15 +46,9 @@ export default function SignupPage() {
       const result = await signupAction(data);
       if (result?.error) {
         setServerError(result.error);
-      } else if (result?.status === "check_email") {
-        setIsSuccess(true);
       }
     });
   };
-
-  if (isSuccess) {
-    return <SignupSuccessCard />;
-  }
 
   return (
     <div className="space-y-6">
@@ -76,13 +70,32 @@ export default function SignupPage() {
         <FormField label="Full Name" name="full_name" placeholder="John Citizen" disabled={isPending} error={errors.full_name?.message} register={register("full_name")} />
         <FormField label="Preferred Name (Optional)" name="preferred_name" placeholder="Johnny" disabled={isPending} error={errors.preferred_name?.message} register={register("preferred_name")} />
         <FormField label="Email Address" name="email" type="email" placeholder="john@example.com.au" autoComplete="email" disabled={isPending} error={errors.email?.message} register={register("email")} />
-        <FormField label="Mobile Number" name="mobile" type="tel" placeholder="0400 000 000" autoComplete="tel" disabled={isPending} error={errors.mobile?.message} register={register("mobile")} />
+
+        <AustralianPhoneInput
+          label="Mobile Number"
+          name="mobile"
+          placeholder="0400 000 000"
+          disabled={isPending}
+          error={errors.mobile?.message}
+          register={register("mobile")}
+        />
 
         <div className="space-y-1.5">
-          <label htmlFor="state" className="block text-xs font-semibold uppercase tracking-wider text-foreground">State / Territory</label>
-          <select id="state" disabled={isPending} className={`w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${errors.state ? "border-destructive" : "border-border"}`} {...register("state")}>
-            <option value="">Select State</option>
-            {AU_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}
+          <label htmlFor="state" className="block text-xs font-semibold uppercase tracking-wider text-foreground">
+            State / Territory
+          </label>
+          <select
+            id="state"
+            disabled={isPending}
+            className={`w-full rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${errors.state ? "border-destructive" : "border-border"}`}
+            {...register("state")}
+          >
+            <option value="">Select State / Territory</option>
+            {AU_STATES.map((s) => (
+              <option key={s} value={s}>
+                {AU_STATE_NAMES[s]}
+              </option>
+            ))}
           </select>
           {errors.state && <p className="text-xs font-medium text-destructive">{errors.state.message}</p>}
         </div>

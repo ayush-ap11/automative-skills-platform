@@ -41,14 +41,14 @@ export function AssessmentStatusBadge({ status, className = "" }: AssessmentStat
     case "submitted":
       return (
         <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className}`}
           style={{
-            backgroundColor: "var(--muted)",
-            color: "var(--muted-foreground)",
-            border: "1px solid var(--border)",
+            backgroundColor: "color-mix(in srgb, var(--success) 15%, transparent)",
+            color: "var(--success)",
+            border: "1px solid color-mix(in srgb, var(--success) 35%, transparent)",
           }}
         >
-          <Clock className="h-3 w-3" />
+          <CheckCircle2 className="h-3.5 w-3.5" />
           Submitted
         </span>
       );

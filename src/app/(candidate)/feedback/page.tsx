@@ -1,20 +1,13 @@
 import { redirect } from "next/navigation";
 import { MessageSquare } from "lucide-react";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { FeedbackView, AssessmentOption, SkillGapItem, ExaminerCommentItem } from "@/components/candidate/FeedbackView";
 
 export const dynamic = "force-dynamic";
 
 interface FeedbackPageProps {
   searchParams: Promise<{ assessmentId?: string }>;
-}
-
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Missing Supabase service role credentials.");
-  return createSupabaseClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export default async function FeedbackPage({ searchParams }: FeedbackPageProps) {
@@ -74,7 +67,7 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
     .select("competency_unit_code, gap_description, recommended_action")
     .eq("assessment_id", selectedAssessment.id);
 
-  const adminClient = getAdminClient();
+  const adminClient = createAdminClient();
   const { data: examinerReviews } = await adminClient
     .from("examiner_reviews")
     .select(`comment, candidate_answers!inner(assessment_id, questions(question_text))`)

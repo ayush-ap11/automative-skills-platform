@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/navigation";
-import { Clock, ArrowLeft, Layers, ShieldCheck } from "lucide-react";
+import { Clock, ArrowLeft, Layers, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,9 @@ export default async function AssessmentStatusPage({ params }: StatusPageProps) 
 
   if (!candidateProfile) redirect("/assessments");
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
     .select("id, status, assigned_at, candidate_profile_id, assessment_templates(title, framework_version)")
     .eq("id", id)
@@ -59,8 +62,8 @@ export default async function AssessmentStatusPage({ params }: StatusPageProps) 
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
-            <Clock className="h-6 w-6" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 border border-emerald-500/25">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-foreground">
@@ -75,7 +78,10 @@ export default async function AssessmentStatusPage({ params }: StatusPageProps) 
         <div className="rounded-lg border border-border/80 bg-muted/20 p-4 space-y-2 text-xs">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Review Status:</span>
-            <span className="font-semibold text-amber-700 capitalize">{assessment.status.replace("_", " ")}</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 font-semibold text-emerald-600 dark:text-emerald-400 capitalize">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {assessment.status.replace("_", " ")}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Submitted On:</span>

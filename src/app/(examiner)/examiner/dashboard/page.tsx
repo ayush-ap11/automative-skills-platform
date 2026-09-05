@@ -69,13 +69,13 @@ export default async function ExaminerDashboardPage() {
     .from("assessments")
     .select(`
       id,
-      submitted_at,
+      assigned_at,
       candidate_profile_id,
       assessment_templates (title),
       candidate_profiles (profiles (full_name, preferred_name))
     `)
     .eq("status", "submitted")
-    .order("submitted_at", { ascending: true });
+    .order("assigned_at", { ascending: true });
 
   const attentionItems: AttentionItem[] = (attentionAssessments || []).map((item: any) => {
     const prof = item.candidate_profiles?.profiles;
@@ -84,7 +84,7 @@ export default async function ExaminerDashboardPage() {
       candidate_profile_id: item.candidate_profile_id,
       candidate_name: prof?.preferred_name || prof?.full_name || "Candidate",
       title: item.assessment_templates?.title || "Assessment",
-      submitted_at: item.submitted_at,
+      submitted_at: item.assigned_at,
     };
   });
 

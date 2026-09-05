@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canViewDocument } from "@/lib/candidate/document-auth";
+import { extractDocumentData } from "@/lib/ai/document-extraction";
 
 export async function grantConsent(consentType: string) {
   const supabase = await createClient();
@@ -85,6 +86,25 @@ export async function uploadDocument(formData: FormData) {
     .single();
 
   if (docError) return { error: docError.message };
+
+  const extractable = new Set([
+    "resume",
+    "job_card",
+    "qualification_certificate",
+    "training_certificate",
+    "ev_training_certificate",
+  ]);
+
+  if (extractable.has(category)) {
+    const extractedData = await extractDocumentData(category, fileBuffer, file.type || "application/pdf");
+    if (extractedData) {
+      await supabase
+        .from("documents")
+        .update({ ai_extracted_data: extractedData, status: "ai_extracted" })
+        .eq("id", doc.id);
+    }
+  }
+
   revalidatePath("/documents");
   return { success: true, documentId: doc.id };
 }

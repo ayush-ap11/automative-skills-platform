@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DOCUMENT_CATEGORIES } from "@/app/(candidate)/documents/types";
 import { ReviewSummary, SectionReviewItem } from "@/components/candidate/ReviewSummary";
 
@@ -27,7 +28,9 @@ export default async function AssessmentReviewPage({ params }: ReviewPageProps) 
 
   if (!cp) redirect("/assessments");
 
-  const { data: assessment } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: assessment } = await adminClient
     .from("assessments")
     .select("id, status, template_id, candidate_profile_id, assessment_templates(title, framework_version)")
     .eq("id", id)
@@ -43,7 +46,7 @@ export default async function AssessmentReviewPage({ params }: ReviewPageProps) 
   }
 
   // Fetch sections, questions, and candidate answers to evaluate completion
-  const { data: sections } = await supabase
+  const { data: sections } = await adminClient
     .from("assessment_sections")
     .select("id, title, order_index")
     .eq("template_id", assessment.template_id)
@@ -51,18 +54,30 @@ export default async function AssessmentReviewPage({ params }: ReviewPageProps) 
 
   const sectionIds = (sections || []).map((s) => s.id);
 
-  const { data: mandatoryQuestions } = await supabase
+  const { data: mandatoryQuestions } = await adminClient
     .from("questions")
     .select("id, section_id, mandatory")
     .in("section_id", sectionIds)
     .eq("mandatory", true);
 
-  const { data: answers } = await supabase
+  const { data: answers } = await adminClient
     .from("candidate_answers")
-    .select("question_id")
+    .select("question_id, selected_option_ids, answer_text, verbal_answers(id)")
     .eq("assessment_id", id);
 
-  const answeredSet = new Set((answers || []).map((a) => a.question_id));
+  const answeredSet = new Set(
+    (answers || [])
+      .filter(
+        (a: any) =>
+          (a.selected_option_ids && a.selected_option_ids.length > 0) ||
+          (a.answer_text && a.answer_text.trim().length > 0) ||
+          (a.verbal_answers &&
+            (Array.isArray(a.verbal_answers)
+              ? a.verbal_answers.length > 0
+              : !!a.verbal_answers?.id))
+      )
+      .map((a: any) => a.question_id)
+  );
 
   const sectionItems: SectionReviewItem[] = (sections || []).map((sec) => {
     const secMandatory = (mandatoryQuestions || []).filter((q) => q.section_id === sec.id);
