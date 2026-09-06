@@ -1,13 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Copy, AlertTriangle } from "lucide-react";
+import {
+  Check,
+  Copy,
+  AlertTriangle,
+  MailCheck,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OneTimePasswordPanelProps {
   email: string;
   password: string;
   roleLabel?: string; // e.g. "examiner" or "candidate"
+  emailSent?: boolean;
+  emailWarning?: string | null;
   onDone: () => void;
 }
 
@@ -15,6 +23,8 @@ export function OneTimePasswordPanel({
   email,
   password,
   roleLabel = "examiner",
+  emailSent,
+  emailWarning,
   onDone,
 }: OneTimePasswordPanelProps) {
   const [copied, setCopied] = useState(false);
@@ -78,10 +88,35 @@ export function OneTimePasswordPanel({
         </div>
       </div>
 
+      {emailSent && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-xs text-emerald-800 dark:text-emerald-300">
+          <MailCheck className="size-4 shrink-0 text-emerald-600" />
+          <span>
+            Examiner invite email successfully sent via Brevo with login link
+            and credentials.
+          </span>
+        </div>
+      )}
+
+      {emailWarning && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-300">
+          <AlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600" />
+          <div>
+            <span className="font-semibold">Email could not be delivered:</span>{" "}
+            {emailWarning}
+            <p className="mt-0.5 text-[11px] text-amber-700 dark:text-amber-300/90">
+              Please copy the temporary password below and provide it to the
+              examiner manually.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-300">
         <AlertTriangle className="size-4 shrink-0 mt-0.5" />
         <span className="font-bold">
-          This password is shown only once — copy it now and share it directly with the {roleLabel}.
+          This password is shown only once — copy it now and share it directly
+          with the {roleLabel}.
         </span>
       </div>
 
