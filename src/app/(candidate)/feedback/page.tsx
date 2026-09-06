@@ -70,16 +70,48 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
   const adminClient = createAdminClient();
   const { data: examinerReviews } = await adminClient
     .from("examiner_reviews")
-    .select(`comment, candidate_answers!inner(assessment_id, questions(question_text))`)
+    .select(`
+      id, final_score, comment,
+      candidate_answers!inner(
+        id, marks_awarded, is_correct, assessment_id,
+        questions(id, question_text, marks, skill_category)
+      )
+    `)
     .eq("candidate_answers.assessment_id", selectedAssessment.id)
     .not("comment", "is", null);
 
   const examinerComments: ExaminerCommentItem[] = (examinerReviews || [])
     .filter((r: any) => r.comment && r.comment.trim().length > 0)
-    .map((r: any) => ({
-      question_text: r.candidate_answers?.questions?.question_text || "Assessment Question",
-      comment: r.comment,
-    }));
+    .map((r: any) => {
+      const q = r.candidate_answers?.questions;
+      const maxMarks = q?.marks || 10;
+      const awarded =
+        r.candidate_answers?.marks_awarded != null
+          ? Number(r.candidate_answers.marks_awarded)
+          : r.final_score != null
+            ? (Number(r.final_score) / 100) * maxMarks
+            : maxMarks;
+
+      const pct = maxMarks > 0 ? (awarded / maxMarks) * 100 : Number(r.final_score || 0);
+
+      let status_tag: "Correct" | "Partially Correct" | "Needs Improvement" = "Needs Improvement";
+      if (pct >= 75 || r.candidate_answers?.is_correct) {
+        status_tag = "Correct";
+      } else if (pct >= 50) {
+        status_tag = "Partially Correct";
+      } else {
+        status_tag = "Needs Improvement";
+      }
+
+      return {
+        question_text: q?.question_text || "Assessment Question",
+        comment: r.comment,
+        marks_awarded: Math.round(awarded * 10) / 10,
+        max_marks: maxMarks,
+        status_tag,
+        category: q?.skill_category || undefined,
+      };
+    });
 
   const skillGaps: SkillGapItem[] = (rawSkillGaps || []).map((g) => ({
     competency_unit_code: g.competency_unit_code,

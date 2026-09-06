@@ -59,12 +59,13 @@ export async function reassignExaminer(
 
   const { data: assessment } = await supabase
     .from("assessments")
-    .select("id, assigned_examiner_id, organisation_id")
+    .select("id, assigned_examiner_id, candidate_profiles!inner(profiles!inner(organisation_id))")
     .eq("id", assessmentId)
     .maybeSingle();
 
   if (!assessment) return { error: "Assessment not found" };
-  if (assessment.organisation_id !== orgId) return { error: "Access denied: assessment outside organisation" };
+  const assessmentOrgId = (assessment as any).candidate_profiles?.profiles?.organisation_id;
+  if (assessmentOrgId !== orgId) return { error: "Access denied: assessment outside organisation" };
 
   const { data: newExaminer } = await supabase
     .from("profiles")

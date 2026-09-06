@@ -58,7 +58,9 @@ export function DocumentReviewDialog({ documentId, open, onOpenChange, onReviewe
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{details?.categoryLabel || "Document Review"}</DialogTitle>
-          <DialogDescription className="truncate">{details?.fileName || "Loading file details..."}</DialogDescription>
+          <DialogDescription className="truncate">
+            {details?.fileName || (loading ? "Loading file details..." : "Verification details and evidence review")}
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (

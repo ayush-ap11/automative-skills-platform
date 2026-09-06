@@ -28,7 +28,8 @@ export default async function ExaminerAssessmentsPage() {
           preferred_name
         )
       )
-    `);
+    `)
+    .eq("assigned_examiner_id", user.id);
 
   const sorted = [...(rawAssessments || [])].sort((a, b) => {
     if (a.status === "submitted" && b.status !== "submitted") return -1;

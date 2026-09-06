@@ -34,6 +34,7 @@ export default async function MyCandidatesPage() {
         )
       )
     `)
+    .eq("assigned_examiner_id", user.id)
     .order("assigned_at", { ascending: false });
 
   const candidateMap = new Map<string, { profile: any; latestAssessment: any }>();
@@ -75,6 +76,7 @@ export default async function MyCandidatesPage() {
         years_experience: profile.years_experience,
         current_role: profile.current_role,
         has_ev_experience: Boolean(profile.ev_experience),
+        ev_readiness_score: latestAssessment.ev_readiness_score,
         overall_score: latestAssessment.overall_score,
         latest_status: latestAssessment.status,
         evidence_completeness: counts,

@@ -14,13 +14,13 @@ function getRatingBadge(rating: string) {
     case "not_demonstrated":
       return <span className="inline-flex rounded-full border border-destructive/30 bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">Not Demonstrated</span>;
     case "developing":
-      return <span className="inline-flex rounded-full border border-warning/30 bg-warning/10 px-2.5 py-0.5 text-xs font-semibold text-warning">Developing</span>;
+      return <span className="inline-flex rounded-full border border-[var(--warning)]/30 bg-[var(--warning)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--warning)]">Developing</span>;
     case "competent":
-      return <span className="inline-flex rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success">Competent</span>;
+      return <span className="inline-flex rounded-full border border-[var(--success)]/30 bg-[var(--success)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--success)]">Competent</span>;
     case "highly_competent":
-      return <span className="inline-flex rounded-full bg-success px-2.5 py-0.5 text-xs font-bold text-success-foreground shadow-2xs">Highly Competent</span>;
+      return <span className="inline-flex rounded-full bg-[var(--success)] px-2.5 py-0.5 text-xs font-bold text-[var(--success-foreground)] shadow-2xs">Highly Competent</span>;
     default:
-      return <span className="inline-flex rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{rating}</span>;
+      return <span className="inline-flex rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground capitalize">{rating.replace(/_/g, " ")}</span>;
   }
 }
 
@@ -107,25 +107,54 @@ export default async function PracticalObservationDetailPage({ params }: PagePro
       </div>
 
       <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
-        <h2 className="text-base font-bold text-foreground">Evaluated Criteria & Evidence</h2>
-        <div className="divide-y divide-border">
-          {checklist.map((item: any, idx: number) => (
-            <div key={item.id || idx} className="py-3.5 first:pt-0 last:pb-0 space-y-1.5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-5 items-center justify-center rounded bg-muted text-[11px] font-bold text-muted-foreground">{idx + 1}</span>
-                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                </div>
-                {getRatingBadge(item.rating)}
-              </div>
-              {item.comment && (
-                <p className="pl-7 text-xs text-muted-foreground bg-muted/30 p-2 rounded border border-border/50">
-                  <span className="font-medium text-foreground">Observation: </span>{item.comment}
-                </p>
-              )}
-            </div>
-          ))}
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <h2 className="text-base font-bold text-foreground">Evaluated Criteria &amp; Evidence</h2>
+          <span className="text-xs text-muted-foreground">{checklist.length} evaluated criteria</span>
         </div>
+
+        {checklist.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic py-4 text-center">
+            No specific criteria were recorded for this observation.
+          </p>
+        ) : (
+          <div className="divide-y divide-border">
+            {checklist.map((rawItem: any, idx: number) => {
+              const label =
+                rawItem.label || rawItem.item || rawItem.task || rawItem.criterion || `Criterion ${idx + 1}`;
+              const rating =
+                rawItem.rating ||
+                (rawItem.passed === true
+                  ? obs.overall_rating || "competent"
+                  : rawItem.passed === false
+                  ? "not_demonstrated"
+                  : "competent");
+              const comment =
+                rawItem.comment || rawItem.evidence || rawItem.observation || rawItem.notes || null;
+
+              return (
+                <div key={rawItem.id || idx} className="py-4 first:pt-0 last:pb-0 space-y-2">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-[11px] font-bold text-muted-foreground">
+                        {idx + 1}
+                      </span>
+                      <p className="text-sm font-semibold text-foreground">{label}</p>
+                    </div>
+                    {getRatingBadge(rating)}
+                  </div>
+                  {comment && (
+                    <div className="pl-7">
+                      <p className="text-xs text-muted-foreground bg-muted/25 p-2.5 rounded-lg border border-border/60 leading-relaxed">
+                        <span className="font-semibold text-foreground">Evidence / Observation Note: </span>
+                        {comment}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

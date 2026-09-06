@@ -14,9 +14,9 @@ export interface PracticalObservationItem {
 
 const BADGE_MAP: Record<string, { label: string; cls: string }> = {
   not_demonstrated: { label: "Not Demonstrated", cls: "border-destructive/30 bg-destructive/10 text-destructive" },
-  developing: { label: "Developing", cls: "border-warning/30 bg-warning/10 text-warning" },
-  competent: { label: "Competent", cls: "border-success/30 bg-success/10 text-success" },
-  highly_competent: { label: "Highly Competent", cls: "bg-success text-success-foreground font-bold shadow-2xs" },
+  developing: { label: "Developing", cls: "border-[var(--warning)]/30 bg-[var(--warning)]/10 text-[var(--warning)]" },
+  competent: { label: "Competent", cls: "border-[var(--success)]/30 bg-[var(--success)]/10 text-[var(--success)]" },
+  highly_competent: { label: "Highly Competent", cls: "bg-[var(--success)] text-[var(--success-foreground)] font-bold shadow-2xs" },
 };
 
 function getRatingBadge(rating: string) {

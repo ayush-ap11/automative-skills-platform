@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LucideIcon, ArrowUpRight } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/InfoTooltip";
 
 interface ProgressCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface ProgressCardProps {
   icon?: LucideIcon;
   description?: string;
   href?: string;
+  tooltip?: string;
 }
 
 export function ProgressCard({
@@ -19,6 +21,7 @@ export function ProgressCard({
   icon: Icon,
   description,
   href,
+  tooltip,
 }: ProgressCardProps) {
   const safePercentage = Math.min(100, Math.max(0, Math.round(percentage)));
 
@@ -32,15 +35,16 @@ export function ProgressCard({
   const card = (
     <div className={`group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-xs sm:p-5 transition ${href ? "hover:border-primary/50 hover:bg-muted/20 hover:shadow-sm cursor-pointer" : ""}`}>
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           {Icon && (
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Icon className="size-3.5" />
             </div>
           )}
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors truncate">
             {title}
           </h3>
+          {tooltip && <InfoTooltip text={tooltip} />}
         </div>
         <div className="flex items-center gap-1.5">
           {badgeText && (

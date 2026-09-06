@@ -10,14 +10,15 @@ export interface CandidateQueueItem {
   years_experience: number | null;
   current_role: string | null;
   has_ev_experience: boolean;
+  ev_readiness_score?: number | null;
   overall_score: number | null;
   latest_status: string;
   evidence_completeness: { verified: number; total: number };
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  submitted: { label: "Submitted", className: "bg-warning/10 text-warning border-warning/30" },
-  completed: { label: "Completed", className: "bg-success/10 text-success border-success/30" },
+  submitted: { label: "Submitted", className: "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30" },
+  completed: { label: "Completed", className: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30" },
   under_review: { label: "Under Review", className: "bg-primary/10 text-primary border-primary/30" },
   in_progress: { label: "In Progress", className: "bg-primary/10 text-primary border-primary/30" },
   not_started: { label: "Not Started", className: "bg-muted text-muted-foreground border-border" },
@@ -28,6 +29,40 @@ function getStatusBadge(status: string) {
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
       {config.label}
+    </span>
+  );
+}
+
+function getEvReadinessBadge(score?: number | null, hasEvExp?: boolean) {
+  if (score == null && !hasEvExp) return null;
+  const num = score != null ? Number(score) : null;
+
+  let label = "Developing";
+  let cls = "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30";
+
+  if (num != null) {
+    if (num >= 75) {
+      label = "Strong Readiness";
+      cls = "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30";
+    } else if (num >= 50) {
+      label = "Developing";
+      cls = "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30";
+    } else if (num > 0) {
+      label = "Significant Gap";
+      cls = "bg-destructive/10 text-destructive border-destructive/30";
+    } else {
+      label = "Insufficient Evidence";
+      cls = "bg-muted text-muted-foreground border-border";
+    }
+  } else if (hasEvExp) {
+    label = "Developing";
+    cls = "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30";
+  }
+
+  return (
+    <span className={`mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium border ${cls}`}>
+      <Zap className="size-3 shrink-0" />
+      {num != null ? `${num}% – ${label}` : label}
     </span>
   );
 }
@@ -88,11 +123,7 @@ export function CandidateQueueList({ candidates }: { candidates: CandidateQueueI
                   <tr key={c.id} onClick={() => router.push(`/examiner/candidates/${c.id}`)} className="cursor-pointer transition hover:bg-muted/50">
                     <td className="px-5 py-4">
                       <div className="font-semibold text-foreground">{c.name}</div>
-                      {c.has_ev_experience && (
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-secondary/10 px-2 py-0.5 text-[11px] font-medium text-secondary">
-                          <Zap className="size-3" /> EV Certified
-                        </span>
-                      )}
+                      {getEvReadinessBadge(c.ev_readiness_score, c.has_ev_experience)}
                     </td>
                     <td className="px-5 py-4 text-muted-foreground">{c.years_experience !== null ? `${c.years_experience} yrs` : "—"}</td>
                     <td className="px-5 py-4 text-muted-foreground">{c.current_role || "—"}</td>
@@ -113,6 +144,7 @@ export function CandidateQueueList({ candidates }: { candidates: CandidateQueueI
                   <div>
                     <h4 className="font-semibold text-foreground">{c.name}</h4>
                     <p className="text-xs text-muted-foreground">{c.current_role || "No role specified"}</p>
+                    {getEvReadinessBadge(c.ev_readiness_score, c.has_ev_experience)}
                   </div>
                   {getStatusBadge(c.latest_status)}
                 </div>

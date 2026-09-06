@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Lock, FileText, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import { getAdminDocumentUrl } from "@/app/(admin)/admin/candidates/actions";
-import { CATEGORY_LABELS } from "@/app/(examiner)/examiner/documents/actions";
+import { CATEGORY_LABELS } from "@/app/(admin)/admin/documents/constants";
 
 export interface DocumentItem {
   id: string;

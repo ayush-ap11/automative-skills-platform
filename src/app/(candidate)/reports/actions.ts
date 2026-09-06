@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface GetReportSignedUrlResult {
   url?: string;
@@ -47,14 +48,19 @@ export async function getReportSignedUrl(reportId: string): Promise<GetReportSig
     .replace(/^candidate-reports\//, "")
     .replace(/^\//, "");
 
-  // 2. Generate a 5-minute signed download URL
-  const { data: signedData, error: signError } = await supabase.storage
-    .from("candidate-reports")
-    .createSignedUrl(cleanPath, 300);
+  // 2. Generate signed download URL using admin client to prevent storage RLS key lookup failures
+  try {
+    const admin = createAdminClient();
+    const { data: signedData, error: signError } = await admin.storage
+      .from("candidate-reports")
+      .createSignedUrl(cleanPath, 300);
 
-  if (signError || !signedData?.signedUrl) {
-    return { error: signError?.message || "Failed to generate secure report link." };
+    if (signError || !signedData?.signedUrl) {
+      return { error: signError?.message || "Failed to generate secure report link." };
+    }
+
+    return { url: signedData.signedUrl };
+  } catch (err: any) {
+    return { error: err?.message || "Failed to generate secure report link." };
   }
-
-  return { url: signedData.signedUrl };
 }

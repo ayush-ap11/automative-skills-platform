@@ -1,6 +1,5 @@
 "use client";
 
-import { ProgressCard } from "@/components/shared/ProgressCard";
 import {
   Accordion,
   AccordionContent,
@@ -41,12 +40,36 @@ export function EVReadinessDashboard({ scores }: EVReadinessDashboardProps) {
   const overall = Math.round(Number(scores.overall_score ?? 0));
 
   const categories = [
-    { title: "EV Knowledge", value: Number(scores.ev_knowledge ?? 0) },
-    { title: "HV Safety Awareness", value: Number(scores.hv_safety_awareness ?? 0) },
-    { title: "Diagnostics", value: Number(scores.diagnostics ?? 0) },
-    { title: "Practical Evidence", value: Number(scores.practical_evidence ?? 0) },
-    { title: "Training Evidence", value: Number(scores.training_evidence ?? 0) },
-    { title: "Verbal Reasoning", value: Number(scores.verbal_reasoning ?? 0) },
+    {
+      title: "EV Knowledge",
+      value: Number(scores.ev_knowledge ?? 0),
+      explanation: "Understanding of EV powertrain architectures, battery chemistry, and high-voltage electrical principles.",
+    },
+    {
+      title: "HV Safety Awareness",
+      value: Number(scores.hv_safety_awareness ?? 0),
+      explanation: "Mastery of high-voltage isolation, lockout/tagout procedures, PPE requirements, and zero-potential testing.",
+    },
+    {
+      title: "Diagnostics",
+      value: Number(scores.diagnostics ?? 0),
+      explanation: "Ability to troubleshoot EV fault codes, analyze battery management system data, and isolate component faults.",
+    },
+    {
+      title: "Practical Evidence",
+      value: Number(scores.practical_evidence ?? 0),
+      explanation: "Hands-on tasks and physical workshop procedures observed, evaluated, and verified by an examiner.",
+    },
+    {
+      title: "Training Evidence",
+      value: Number(scores.training_evidence ?? 0),
+      explanation: "Accredited EV/HV training certificates and formal manufacturer certifications verified on record.",
+    },
+    {
+      title: "Verbal Reasoning",
+      value: Number(scores.verbal_reasoning ?? 0),
+      explanation: "Clear spoken articulation of safety rationale, isolation sequences, and emergency response steps.",
+    },
   ];
 
   const defaultExplanation =
@@ -87,14 +110,35 @@ export function EVReadinessDashboard({ scores }: EVReadinessDashboardProps) {
         )}
       </div>
 
-      {/* 2. Six Category ProgressCards */}
+      {/* 2. Six Category Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
-          <ProgressCard
+          <div
             key={cat.title}
-            title={cat.title}
-            percentage={cat.value}
-          />
+            className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-xs transition hover:border-primary/40 hover:shadow-sm"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {cat.title}
+                </h3>
+                <span className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {Math.round(cat.value)}%
+                </span>
+              </div>
+
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(0, Math.round(cat.value)))}%` }}
+                />
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground border-t border-border/50 pt-2.5">
+              {cat.explanation}
+            </p>
+          </div>
         ))}
       </div>
 

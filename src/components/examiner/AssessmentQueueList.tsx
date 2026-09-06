@@ -12,8 +12,8 @@ export interface AssessmentQueueItem {
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  submitted: { label: "Submitted", className: "bg-warning/10 text-warning border-warning/30" },
-  completed: { label: "Completed", className: "bg-success/10 text-success border-success/30" },
+  submitted: { label: "Submitted", className: "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30" },
+  completed: { label: "Completed", className: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30" },
   under_review: { label: "Under Review", className: "bg-primary/10 text-primary border-primary/30" },
   in_progress: { label: "In Progress", className: "bg-primary/10 text-primary border-primary/30" },
   not_started: { label: "Not Started", className: "bg-muted text-muted-foreground border-border" },

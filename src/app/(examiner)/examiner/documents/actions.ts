@@ -3,16 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const SENSITIVE_CATEGORIES = [
-  "health_fitness", "eye_test", "passport", "medicare_card", "national_id", "police_check",
-];
-
-export const CATEGORY_LABELS: Record<string, string> = {
-  resume: "Resume / CV", job_card: "Job Card Evidence", qualification_certificate: "Qualification Certificate",
-  training_certificate: "Training Certificate", ev_training_certificate: "EV Training Certificate",
-  safety_training: "Safety Training", manufacturer_training: "Manufacturer Training",
-  drivers_licence: "Driver's Licence", health_fitness: "Health & Fitness", eye_test: "Eye Test", other: "Other Supporting Document",
-};
+import { SENSITIVE_CATEGORIES, CATEGORY_LABELS } from "./constants";
 
 export interface DocumentDetailsResult {
   fileUrl?: string; category?: string; categoryLabel?: string; fileName?: string;
@@ -45,8 +36,15 @@ export async function getDocumentDetails(documentId: string): Promise<DocumentDe
   const { supabase, doc } = auth;
 
   const admin = createAdminClient();
-  const { data: signed, error: signErr } = await admin.storage.from("candidate-documents").createSignedUrl(doc.storage_path, 3600);
-  if (signErr || !signed?.signedUrl) return { error: signErr?.message || "Failed to generate preview URL" };
+  let fileUrl: string | undefined;
+  try {
+    const { data: signed } = await admin.storage.from("candidate-documents").createSignedUrl(doc.storage_path, 3600);
+    if (signed?.signedUrl) {
+      fileUrl = signed.signedUrl;
+    }
+  } catch {
+    // Storage preview URL generation optional
+  }
 
   const { data: reviews } = await supabase.from("document_reviews")
     .select("id, decision, comment, reviewed_at, reviewer:profiles(full_name, preferred_name)")
@@ -58,9 +56,12 @@ export async function getDocumentDetails(documentId: string): Promise<DocumentDe
   }));
 
   return {
-    fileUrl: signed.signedUrl, category: doc.category,
+    fileUrl,
+    category: doc.category,
     categoryLabel: CATEGORY_LABELS[doc.category] || doc.category,
-    fileName: doc.file_name, aiExtractedData: doc.ai_extracted_data as Record<string, unknown> | null, pastReviews,
+    fileName: doc.file_name,
+    aiExtractedData: doc.ai_extracted_data as Record<string, unknown> | null,
+    pastReviews,
   };
 }
 

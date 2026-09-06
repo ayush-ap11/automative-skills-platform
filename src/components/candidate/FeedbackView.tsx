@@ -6,7 +6,14 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 export interface AssessmentOption { id: string; title: string; }
-export interface ExaminerCommentItem { question_text: string; comment: string; }
+export interface ExaminerCommentItem {
+  question_text: string;
+  comment: string;
+  marks_awarded: number;
+  max_marks: number;
+  status_tag: "Correct" | "Partially Correct" | "Needs Improvement";
+  category?: string;
+}
 export interface SkillGapItem { competency_unit_code: string | null; gap_description: string | null; recommended_action: string | null; }
 
 interface FeedbackViewProps {
@@ -108,18 +115,66 @@ export function FeedbackView({
       {examinerComments.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <MessageSquare className="h-4 w-4 text-primary" />
             <span>Examiner Comments by Question</span>
           </div>
-          <Accordion className="rounded-xl border border-border bg-card">
-            {examinerComments.map((ec, idx) => (
-              <AccordionItem key={idx} value={`item-${idx}`} className="border-b last:border-b-0 border-border px-4">
-                <AccordionTrigger className="cursor-pointer py-3.5 text-sm font-medium text-foreground hover:no-underline">
-                  {ec.question_text}
-                </AccordionTrigger>
-                <AccordionContent className="pb-3.5 text-sm leading-relaxed text-muted-foreground">{ec.comment}</AccordionContent>
-              </AccordionItem>
-            ))}
+          <Accordion className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+            {examinerComments.map((ec, idx) => {
+              const statusBadgeStyles = {
+                Correct: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30",
+                "Partially Correct": "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30",
+                "Needs Improvement": "bg-destructive/10 text-destructive border-destructive/30",
+              }[ec.status_tag];
+
+              return (
+                <AccordionItem key={idx} value={`item-${idx}`} className="border-none px-4 sm:px-5">
+                  <AccordionTrigger className="cursor-pointer py-4 text-sm font-medium text-foreground hover:no-underline">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full pr-3 text-left">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-muted-foreground">
+                          Q{idx + 1}
+                        </span>
+                        <span className="font-medium text-foreground line-clamp-1 sm:line-clamp-2">
+                          {ec.question_text}
+                        </span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto pl-8 sm:pl-0">
+                        <span className="text-xs font-semibold text-foreground/80 whitespace-nowrap">
+                          {ec.marks_awarded} / {ec.max_marks} marks
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide whitespace-nowrap ${statusBadgeStyles}`}
+                        >
+                          {ec.status_tag}
+                        </span>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 pt-1 text-sm text-foreground space-y-3 border-t border-border/40">
+                    <div className="space-y-1 text-xs">
+                      <span className="font-semibold uppercase tracking-wider text-muted-foreground">Question:</span>
+                      <p className="text-sm font-medium text-foreground">{ec.question_text}</p>
+                      {ec.category && (
+                        <div className="pt-1">
+                          <span className="inline-flex items-center rounded-md bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {ec.category}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/30 p-3.5 space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                        <MessageSquare className="size-3.5" />
+                        <span>Examiner Observation & Feedback:</span>
+                      </div>
+                      <p className="text-sm italic leading-relaxed text-foreground">
+                        &ldquo;{ec.comment}&rdquo;
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         </div>
       )}
