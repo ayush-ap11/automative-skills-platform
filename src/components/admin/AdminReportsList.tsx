@@ -1,9 +1,21 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, ExternalLink, Loader2, Calendar, FileText, UserCheck, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Search,
+  UserCheck,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import {
+  generateAdminReportAction,
+  getAdminReportUrl,
+} from "@/app/(admin)/admin/reports/actions";
 import { Button } from "@/components/ui/button";
-import { getAdminReportUrl } from "@/app/(admin)/admin/reports/actions";
 
 export interface AdminReportItem {
   id: string;
@@ -12,6 +24,8 @@ export interface AdminReportItem {
   report_type: string;
   generated_by: string;
   generated_at: string;
+  has_report?: boolean;
+  assessment_id?: string;
 }
 
 interface Props {
@@ -24,14 +38,21 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
 };
 
 export function AdminReportsList({ reports }: Props) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<{ id: string; text: string } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<{ id: string; text: string } | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     return reports.filter((r) => {
-      if (search && !r.candidate_name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (
+        search &&
+        !r.candidate_name.toLowerCase().includes(search.toLowerCase())
+      )
+        return false;
       if (typeFilter !== "all" && r.report_type !== typeFilter) return false;
       return true;
     });
@@ -46,6 +67,18 @@ export function AdminReportsList({ reports }: Props) {
       setErrorMsg({ id: reportId, text: res.error });
     } else if (res.url) {
       window.open(res.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleGenerateReport = async (assessmentId: string, itemId: string) => {
+    setLoadingId(itemId);
+    setErrorMsg(null);
+    const res = await generateAdminReportAction(assessmentId);
+    setLoadingId(null);
+    if (res.error) {
+      setErrorMsg({ id: itemId, text: res.error });
+    } else {
+      router.refresh();
     }
   };
 
@@ -76,12 +109,10 @@ export function AdminReportsList({ reports }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-center shadow-xs">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <FileText className="h-6 w-6" />
-          </div>
-          <p className="mt-4 max-w-md text-sm font-medium text-foreground">
-            No reports generated yet — reports are created automatically once an assessment is finalised. That pipeline is being wired up in an upcoming step.
+        <div className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-center shadow-xs">
+          <FileText className="size-8 text-muted-foreground mb-2" />
+          <p className="text-xs text-muted-foreground">
+            No reports match your current filters.
           </p>
         </div>
       ) : (
@@ -89,35 +120,80 @@ export function AdminReportsList({ reports }: Props) {
           {filtered.map((r) => {
             const isLoading = loadingId === r.id;
             const err = errorMsg?.id === r.id ? errorMsg.text : null;
+            const isReady = r.has_report !== false;
+
             return (
-              <div key={r.id} className="p-4 space-y-2 hover:bg-muted/30 transition-colors">
+              <div
+                key={r.id}
+                className="p-4 space-y-2 hover:bg-muted/30 transition-colors"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-xs text-foreground">{r.candidate_name}</span>
-                      <span className="text-[11px] text-muted-foreground">• {REPORT_TYPE_LABELS[r.report_type] || r.report_type}</span>
+                      <span className="font-semibold text-xs text-foreground">
+                        {r.candidate_name}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        • {REPORT_TYPE_LABELS[r.report_type] || r.report_type}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${isReady ? "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20" : "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/20"}`}
+                      >
+                        {isReady ? "Ready" : "Pending Generation"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1" suppressHydrationWarning>
-                        <Calendar className="size-3" /> {new Date(r.generated_at).toLocaleDateString("en-AU")}
+                      <span
+                        className="inline-flex items-center gap-1"
+                        suppressHydrationWarning
+                      >
+                        <Calendar className="size-3" />{" "}
+                        {new Date(r.generated_at).toLocaleDateString("en-AU")}
                       </span>
                       <span>•</span>
                       <span className="inline-flex items-center gap-1">
-                        <UserCheck className="size-3" /> Generated by: <strong className="capitalize text-foreground">{r.generated_by}</strong>
+                        <UserCheck className="size-3" /> Generated by:{" "}
+                        <strong className="capitalize text-foreground">
+                          {r.generated_by}
+                        </strong>
                       </span>
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => handleViewReport(r.id)}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer text-xs font-semibold gap-1.5 self-start sm:self-auto h-8"
-                  >
-                    {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <ExternalLink className="size-3.5" />}
-                    <span>{isLoading ? "Preparing..." : "View Report"}</span>
-                  </Button>
+                  {isReady ? (
+                    <Button
+                      onClick={() => handleViewReport(r.id)}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer text-xs font-semibold gap-1.5 self-start sm:self-auto h-8"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <ExternalLink className="size-3.5" />
+                      )}
+                      <span>{isLoading ? "Preparing..." : "View Report"}</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() =>
+                        handleGenerateReport(r.assessment_id || r.id, r.id)
+                      }
+                      disabled={isLoading}
+                      size="sm"
+                      className="cursor-pointer text-xs font-semibold gap-1.5 self-start sm:self-auto h-8 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <FileText className="size-3.5" />
+                      )}
+                      <span>
+                        {isLoading ? "Generating..." : "Generate Report"}
+                      </span>
+                    </Button>
+                  )}
                 </div>
 
                 {err && (

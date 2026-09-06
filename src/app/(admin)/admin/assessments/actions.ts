@@ -43,9 +43,18 @@ export async function upsertSection(templateId: string, sectionId: string | null
     if (error) return { error: error.message };
     return { success: true };
   }
-  const { error } = await supabase.from("assessment_sections").insert({ template_id: templateId, title: title.trim(), order_index: orderIndex, weight_pct: weightPct });
+  const { data: newSec, error } = await supabase
+    .from("assessment_sections")
+    .insert({
+      template_id: templateId,
+      title: title.trim(),
+      order_index: orderIndex,
+      weight_pct: weightPct,
+    })
+    .select("id")
+    .single();
   if (error) return { error: error.message };
-  return { success: true };
+  return { success: true, id: newSec?.id };
 }
 
 export async function reorderSection(sectionId: string, direction: "up" | "down") {
@@ -114,4 +123,134 @@ export async function assignAssessment(candidateProfileId: string, templateId: s
   });
 
   return { success: true };
+}
+
+export async function createBlankTemplate(): Promise<{
+  success?: boolean;
+  id?: string;
+  error?: string;
+}> {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const { data: tmpl, error } = await supabase
+    .from("assessment_templates")
+    .insert({
+      organisation_id: orgId,
+      title: "Untitled Assessment Template",
+      framework_version: "AUR Release 9.0",
+    })
+    .select("id")
+    .single();
+
+  if (error || !tmpl)
+    return { error: error?.message || "Failed to create template" };
+
+  await supabase.from("assessment_sections").insert({
+    template_id: tmpl.id,
+    title: "Section 1: General Knowledge",
+    order_index: 0,
+    weight_pct: 100,
+  });
+
+  return { success: true, id: tmpl.id };
+}
+
+export async function updateTemplateDetails(
+  templateId: string,
+  title: string,
+  frameworkVersion: string,
+): Promise<{ success?: boolean; error?: string }> {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const { error } = await supabase
+    .from("assessment_templates")
+    .update({
+      title: title.trim(),
+      framework_version: frameworkVersion.trim(),
+    })
+    .eq("id", templateId)
+    .eq("organisation_id", orgId);
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function addQuestionsFromBank(
+  questionIds: string[],
+  targetSectionId: string,
+): Promise<{ success?: boolean; addedCount?: number; error?: string }> {
+  const auth = await verifyAdmin();
+  if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
+  const { supabase, orgId } = auth;
+
+  const { data: sec } = await supabase
+    .from("assessment_sections")
+    .select("id, assessment_templates!inner(organisation_id)")
+    .eq("id", targetSectionId)
+    .maybeSingle();
+
+  if (!sec || (sec as any).assessment_templates?.organisation_id !== orgId) {
+    return { error: "Target section not found or unauthorized" };
+  }
+
+  let added = 0;
+  for (const qId of questionIds) {
+    const { data: orig } = await supabase
+      .from("questions")
+      .select("*, question_options(*)")
+      .eq("id", qId)
+      .maybeSingle();
+
+    if (!orig) continue;
+
+    const {
+      id: _,
+      created_at: __,
+      question_options: origOpts,
+      ...dupPayload
+    } = orig;
+    dupPayload.section_id = targetSectionId;
+    dupPayload.status = orig.status || "active";
+
+    let { data: newQ, error: insErr } = await supabase
+      .from("questions")
+      .insert(dupPayload)
+      .select("id")
+      .single();
+    if (
+      insErr &&
+      (insErr.code === "42703" ||
+        insErr.code === "PGRST204" ||
+        insErr.message?.includes("explanation")) &&
+      "explanation" in dupPayload
+    ) {
+      delete dupPayload.explanation;
+      const retry = await supabase
+        .from("questions")
+        .insert(dupPayload)
+        .select("id")
+        .single();
+      newQ = retry.data;
+      insErr = retry.error;
+    }
+
+    if (!insErr && newQ) {
+      added++;
+      if (origOpts && origOpts.length > 0) {
+        const newOpts = origOpts.map((o: any) => ({
+          question_id: newQ.id,
+          option_text: o.option_text,
+          is_correct: o.is_correct,
+          order_index: o.order_index,
+        }));
+        await supabase.from("question_options").insert(newOpts);
+      }
+    }
+  }
+
+  return { success: true, addedCount: added };
 }

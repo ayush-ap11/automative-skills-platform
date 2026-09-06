@@ -1,6 +1,7 @@
-import "server-only";
 import React from "react";
-import { Document, Page, View, Text, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Page, View, Text, StyleSheet, renderToBuffer, Font } from "@react-pdf/renderer";
+
+Font.registerHyphenationCallback((word) => [word]);
 
 export interface ReportData {
   organisationName: string;

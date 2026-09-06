@@ -1,4 +1,3 @@
-import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const KNOWLEDGE_TYPES = new Set(["multiple_choice", "multiple_answer", "true_false", "scenario", "short_answer"]);

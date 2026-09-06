@@ -13,8 +13,9 @@ export function ExaminerPerformanceTable({ data }: Props) {
 
   if (!hasData) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground italic">
-        No completed reviews yet.
+      <div className="flex h-72 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center shadow-xs">
+        <UserCheck className="size-8 text-muted-foreground mb-2" />
+        <p className="text-xs text-muted-foreground">No completed reviews yet.</p>
       </div>
     );
   }

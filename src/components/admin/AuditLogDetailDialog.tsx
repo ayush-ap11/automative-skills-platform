@@ -1,14 +1,14 @@
 "use client";
 
+import { Activity, Clock, Database, Globe, User } from "lucide-react";
 import React from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { User, Activity, Database, Clock, Globe } from "lucide-react";
 
 export interface AuditLogEntry {
   id: string;
@@ -71,7 +71,9 @@ export function AuditLogDetailDialog({ entry, open, onOpenChange }: Props) {
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1 font-semibold">
                 <Activity className="size-3" /> Action
               </span>
-              <p className="font-medium text-primary font-mono">{entry.action}</p>
+              <p className="font-medium text-primary font-mono">
+                {entry.action}
+              </p>
             </div>
             <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1 font-semibold">
@@ -90,23 +92,27 @@ export function AuditLogDetailDialog({ entry, open, onOpenChange }: Props) {
                 {new Date(entry.created_at).toLocaleString("en-AU")}
               </p>
             </div>
-            {entry.ip_address && (
-              <div className="col-span-2 space-y-1 pt-1 border-t border-border">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1 font-semibold">
-                  <Globe className="size-3" /> IP Address
-                </span>
-                <p className="font-mono text-foreground">{entry.ip_address}</p>
-              </div>
-            )}
+            <div className="col-span-2 space-y-1 pt-1 border-t border-border">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1 font-semibold">
+                <Globe className="size-3" /> IP / Device
+              </span>
+              <p className="font-mono text-foreground">
+                {entry.ip_address || "Not tracked"}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <span className="font-semibold text-foreground text-xs block">Previous Value</span>
+            <span className="font-semibold text-foreground text-xs block">
+              Previous Value
+            </span>
             {renderJsonBlock(entry.previous_value)}
           </div>
 
           <div className="space-y-2">
-            <span className="font-semibold text-foreground text-xs block">New Value</span>
+            <span className="font-semibold text-foreground text-xs block">
+              New Value
+            </span>
             {renderJsonBlock(entry.new_value)}
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { GraduationCap } from "lucide-react";
 import { QualificationPerformanceData } from "./analytics-types";
 
 interface Props {
@@ -20,8 +21,9 @@ export function PerformanceByQualificationChart({ data }: Props) {
 
   if (!hasData) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground italic">
-        Not enough completed assessments yet to show this breakdown.
+      <div className="flex h-72 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-center shadow-xs">
+        <GraduationCap className="size-8 text-muted-foreground mb-2" />
+        <p className="text-xs text-muted-foreground">Not enough completed assessments yet to show this breakdown.</p>
       </div>
     );
   }

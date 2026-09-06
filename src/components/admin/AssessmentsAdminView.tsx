@@ -79,7 +79,7 @@ export function AssessmentsAdminView({ templates, assignedAssessments, candidate
         </div>
 
         {activeTab === "templates" ? (
-          <Button onClick={() => setTemplateDialogOpen(true)} className="rounded-full text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-4">
+          <Button onClick={() => router.push("/admin/assessments/templates/new")} className="rounded-full text-xs font-semibold cursor-pointer gap-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-4">
             <Plus className="size-4" /> New Template
           </Button>
         ) : (

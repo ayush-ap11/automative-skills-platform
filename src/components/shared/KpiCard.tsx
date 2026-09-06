@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LucideIcon, ArrowUpRight } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/InfoTooltip";
 
 interface KpiCardProps {
   label: string;
@@ -8,6 +9,7 @@ interface KpiCardProps {
   accentColor?: string;
   description?: string;
   href?: string;
+  tooltip?: string;
 }
 
 export function KpiCard({
@@ -17,14 +19,20 @@ export function KpiCard({
   accentColor = "var(--foreground)",
   description,
   href,
+  tooltip,
 }: KpiCardProps) {
   const content = (
-    <div className={`group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-xs transition ${href ? "hover:border-primary/50 hover:bg-muted/20 hover:shadow-sm cursor-pointer" : "hover:shadow-sm"}`}>
+    <div
+      className={`group flex h-full flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-xs transition ${href ? "hover:border-primary/50 hover:bg-muted/20 hover:shadow-sm cursor-pointer" : "hover:shadow-sm"}`}
+    >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-          {label}
-        </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors truncate">
+            {label}
+          </span>
+          {tooltip && <InfoTooltip text={tooltip} />}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
           {href && (
             <ArrowUpRight className="size-3.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all" />
           )}
@@ -36,7 +44,10 @@ export function KpiCard({
         </div>
       </div>
       <div className="mt-4">
-        <span className="text-3xl font-bold tracking-tight" style={{ color: accentColor }}>
+        <span
+          className="text-3xl font-bold tracking-tight"
+          style={{ color: accentColor }}
+        >
           {value}
         </span>
         {description && (
@@ -47,7 +58,11 @@ export function KpiCard({
   );
 
   if (href) {
-    return <Link href={href} className="block">{content}</Link>;
+    return (
+      <Link href={href} className="block">
+        {content}
+      </Link>
+    );
   }
 
   return content;

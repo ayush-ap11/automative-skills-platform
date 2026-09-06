@@ -17,7 +17,6 @@ const PRIMARY_NAV = [
 ];
 
 const MORE_NAV = [
-  { label: "Question Bank", href: "/admin/question-bank", icon: HelpCircle },
   { label: "Examiners", href: "/admin/examiners", icon: UserCheck },
   { label: "Competency Framework", href: "/admin/competency-framework", icon: Award },
   { label: "EV Readiness", href: "/admin/ev-readiness", icon: Zap },
