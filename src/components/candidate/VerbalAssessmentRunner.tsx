@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, AlertCircle, FileAudio } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ interface VerbalAssessmentRunnerProps {
 
 export function VerbalAssessmentRunner({
   assessmentId,
-  sectionId,
   sectionTitle,
   questions,
   existingAnswers,

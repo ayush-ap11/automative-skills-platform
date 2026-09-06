@@ -10,7 +10,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   generateAdminReportAction,
   getAdminReportUrl,

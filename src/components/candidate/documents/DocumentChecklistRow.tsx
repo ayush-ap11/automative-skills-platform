@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Lock, ExternalLink, Upload, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DocumentStatusBadge } from "@/components/candidate/DocumentStatusBadge";

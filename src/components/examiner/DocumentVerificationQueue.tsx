@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { FileText, Calendar, Filter, X, ChevronRight, Clock, AlertTriangle } from "lucide-react";
+import { FileText, Filter, X, ChevronRight, Clock, AlertTriangle } from "lucide-react";
 import { DocumentReviewDialog } from "@/components/examiner/DocumentReviewDialog";
 import { CATEGORY_LABELS } from "@/app/(examiner)/examiner/documents/constants";
 

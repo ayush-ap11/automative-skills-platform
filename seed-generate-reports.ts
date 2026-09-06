@@ -25,8 +25,7 @@ async function run() {
   console.log(`Found ${assessments.length} candidate assessments with status submitted/completed/finalised.`);
 
   for (const a of assessments) {
-    const candName = (a.candidate_profiles as any)?.profiles?.full_name || "Unknown";
-    console.log(`\nChecking assessment: ${a.id} (${candName}, status=${a.status})`);
+    console.log(`\nChecking assessment: ${a.id} (Candidate: [REDACTED], status=${a.status})`);
 
     // Check if report already exists
     const { data: existing } = await admin
@@ -58,8 +57,7 @@ async function run() {
   console.log("\n=== ALL GENERATED REPORTS IN DATABASE ===");
   console.log(`Total reports: ${allReports?.length}`);
   for (const r of allReports || []) {
-    const name = (r.candidate_profiles as any)?.profiles?.full_name || "Unknown";
-    console.log(`- Report ${r.id} for ${name} (${r.report_type}) -> ${r.file_storage_path}`);
+    console.log(`- Report ${r.id} for Candidate: [REDACTED] (${r.report_type}) -> ${r.file_storage_path}`);
   }
 }
 

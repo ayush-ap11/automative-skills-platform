@@ -1,7 +1,7 @@
 "use client";
 
 import { Bot, CheckCircle2, Clock, EyeOff, ShieldAlert } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { updateBlindAssessmentMode } from "@/app/(admin)/admin/ai-governance/actions";
 import { Switch } from "@/components/ui/switch";
 

@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/navigation";
-import { Clock, ArrowLeft, Layers, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Layers, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 

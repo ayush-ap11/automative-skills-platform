@@ -4,19 +4,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  User,
   FileText,
   CheckSquare,
   Zap,
   MessageSquareQuote,
   BarChart3,
-  Settings,
   LogOut,
   Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export const CANDIDATE_NAV_ITEMS = [
+const CANDIDATE_NAV_ITEMS = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: LayoutDashboard },
   { label: "My Documents", href: "/documents", icon: FileText },
   { label: "Assessments", href: "/assessments", icon: CheckSquare },

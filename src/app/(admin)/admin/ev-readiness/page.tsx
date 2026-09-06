@@ -1,4 +1,3 @@
-import React from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminEVReadinessView, CategoryAverage, CandidateEVScoreItem } from "@/components/admin/AdminEVReadinessView";

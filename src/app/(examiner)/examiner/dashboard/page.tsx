@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Users, Clock, AlertTriangle, FileText, CheckCircle2, ShieldCheck, Activity, Award } from "lucide-react";
+import { Users, Clock, AlertTriangle, FileText, CheckCircle2, Activity, Award } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { ProgressCard } from "@/components/shared/ProgressCard";

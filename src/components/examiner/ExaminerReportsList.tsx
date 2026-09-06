@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { FileText, ExternalLink, Download, Search, Loader2, Calendar, User, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { FileText, ExternalLink, Search, Loader2, Calendar, User } from "lucide-react";
 import { getExaminerReportSignedUrl } from "@/app/(examiner)/examiner/reports/actions";
 
 export interface ExaminerReportItem {

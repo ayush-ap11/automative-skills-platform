@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Users, CheckSquare, TrendingUp, Settings, MoreHorizontal,
-  HelpCircle, UserCheck, Award, Zap, FileText, BarChart3, Shield, Sparkles, History, X, LogOut,
+  LayoutDashboard, Users, CheckSquare, TrendingUp, MoreHorizontal,
+  UserCheck, Award, Zap, FileText, BarChart3, Shield, Sparkles, History, X, LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -113,7 +114,7 @@ export async function regenerateInviteCode(): Promise<{ success?: boolean; newCo
   if (auth.error || !auth.supabase || !auth.orgId) return { error: auth.error };
   const { supabase, orgId } = auth;
 
-  const newCode = Math.random().toString(36).substring(2, 10).toLowerCase();
+  const newCode = randomBytes(4).toString("hex").toLowerCase();
   const { error } = await supabase
     .from("organisations")
     .update({ invite_code: newCode })

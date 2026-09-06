@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ArrowLeft, User, Award, ChevronRight } from "lucide-react";
+import { User, Award, ChevronRight } from "lucide-react";
 import { AdminAssessmentDetailCard } from "@/components/admin/AdminAssessmentDetailCard";
 import { buildAdminQuestionItem } from "@/components/admin/admin-assessment-mapper";
 

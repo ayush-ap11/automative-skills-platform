@@ -3,7 +3,7 @@
 import { Calendar, FileText, Lock, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CATEGORY_LABELS,
   SENSITIVE_CATEGORIES,

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { UserCheck, Clock, Award } from "lucide-react";
 import { ExaminerPerformanceData } from "./analytics-types";
 

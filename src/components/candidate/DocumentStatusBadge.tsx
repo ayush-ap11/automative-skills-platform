@@ -1,4 +1,3 @@
-import React from "react";
 import { CheckCircle2, Clock, AlertCircle, FileQuestion, Sparkles } from "lucide-react";
 
 interface DocumentStatusBadgeProps {

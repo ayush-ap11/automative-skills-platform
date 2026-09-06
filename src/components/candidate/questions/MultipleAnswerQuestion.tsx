@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Check } from "lucide-react";
 import { QuestionItem, AnswerDraft } from "@/app/(candidate)/assessments/[id]/section/[sectionId]/types";
 

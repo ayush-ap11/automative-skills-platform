@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, ChevronRight, FileText, Clock, AlertTriangle, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronRight, FileText, Clock, ShieldAlert } from "lucide-react";
 
 export interface AttentionItem {
   id: string;

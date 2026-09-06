@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Loader2, Plus, ShieldAlert, Sparkles } from "lucide-react";
+import { Check, Loader2, Plus, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";

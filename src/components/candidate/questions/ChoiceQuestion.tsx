@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
 import { QuestionItem, AnswerDraft } from "@/app/(candidate)/assessments/[id]/section/[sectionId]/types";
 import { ShortAnswerQuestion } from "./ShortAnswerQuestion";
 

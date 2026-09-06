@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { ShieldCheck, Bell, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Bell, KeyRound, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { updatePassword, toggleEmailNotifications, revokeConsent } from "@/app/(candidate)/settings/actions";
+import { updatePassword, toggleEmailNotifications, revokeConsent, deleteCandidateAccount } from "@/app/(candidate)/settings/actions";
 
 export interface ConsentItem { id: string; consent_type: string; granted: boolean; granted_at: string; }
 
@@ -35,6 +35,22 @@ export function SettingsView({ email, emailNotificationsEnabled, consents: initi
   const [consents, setConsents] = useState(initialConsents);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [consentMsg, setConsentMsg] = useState<string | null>(null);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    const res = await deleteCandidateAccount();
+    if (res.success) {
+      window.location.href = "/login?deleted=true";
+    } else {
+      setDeleteLoading(false);
+      setDeleteError(res.error || "Failed to delete account.");
+    }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +153,56 @@ export function SettingsView({ email, emailNotificationsEnabled, consents: initi
           ))}
         </div>
         <p className="text-[11px] text-muted-foreground pt-1">Revoking a document consent does not delete files already uploaded — contact your organisation to request deletion.</p>
+      </div>
+
+      {/* 4. Data Deletion & Privacy Rights */}
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 shadow-xs space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+          <Trash2 className="size-4" />
+          <span>Account Deletion & Data Erasure</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Under the Australian Privacy Principles (APP 11.2), you have the right to request destruction or de-identification of your personal information. Deleting your account will permanently purge your uploaded documents, voice recordings, USI, and contact information.
+        </p>
+        {deleteError && <p className="text-xs text-destructive font-medium">{deleteError}</p>}
+        {showDeleteConfirm ? (
+          <div className="rounded-lg border border-destructive/40 bg-card p-3 space-y-3 max-w-md">
+            <div className="flex items-start gap-2 text-xs text-destructive">
+              <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+              <span>Are you sure? This action is permanent and cannot be undone. All documents and assessment responses will be purged or anonymized.</span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={deleteLoading}
+                onClick={handleDeleteAccount}
+                className="cursor-pointer text-xs"
+              >
+                {deleteLoading && <Loader2 className="size-3 animate-spin mr-1.5" />}
+                Permanently Delete My Data
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={deleteLoading}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="cursor-pointer text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="cursor-pointer text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+          >
+            Request Account Deletion
+          </Button>
+        )}
       </div>
     </div>
   );

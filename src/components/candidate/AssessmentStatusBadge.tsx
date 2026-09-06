@@ -1,4 +1,3 @@
-import React from "react";
 import { CheckCircle2, Clock, PlayCircle, HelpCircle } from "lucide-react";
 
 interface AssessmentStatusBadgeProps {

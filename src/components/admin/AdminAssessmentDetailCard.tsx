@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Check, ShieldAlert, Bot, AlertTriangle, Play, FileText, UserCheck, Clock } from "lucide-react";
+import { Check, ShieldAlert, Bot, AlertTriangle, UserCheck, Clock } from "lucide-react";
 
 export interface AdminQuestionItem {
   id: string;

@@ -22,6 +22,27 @@ export async function submitAiReviewAction(
     } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized" };
 
+    // Verify caller role
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, organisation_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || (profile.role !== "examiner" && profile.role !== "admin")) {
+      return { error: "Unauthorized: Examiner or Admin access required." };
+    }
+
+    // Validate score bounds
+    if (
+      typeof input.finalScore !== "number" ||
+      input.finalScore < 0 ||
+      input.finalScore > 100 ||
+      Number.isNaN(input.finalScore)
+    ) {
+      return { error: "Invalid score: Final score must be a number between 0 and 100." };
+    }
+
     const admin = createAdminClient();
 
     // Verify answer exists
@@ -40,6 +61,12 @@ export async function submitAiReviewAction(
 
     if (ansErr || !answer) {
       return { error: "Assessment answer record not found." };
+    }
+
+    // Verify examiner assignment
+    const assignedExaminerId = (answer.assessments as any)?.assigned_examiner_id;
+    if (profile.role === "examiner" && assignedExaminerId !== user.id) {
+      return { error: "Forbidden: You are not the assigned examiner for this assessment." };
     }
 
     // Check existing review

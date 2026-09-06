@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, CheckCircle2, Mic, Wifi, VolumeX, Clock, ArrowRight, Loader2, Info } from "lucide-react";
+import { Layers, Mic, Wifi, VolumeX, Clock, ArrowRight, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { startAssessment } from "@/app/(candidate)/assessments/[id]/instructions/actions";
 

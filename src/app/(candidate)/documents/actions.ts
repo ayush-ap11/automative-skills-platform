@@ -5,24 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { canViewDocument } from "@/lib/candidate/document-auth";
 import { extractDocumentData } from "@/lib/ai/document-extraction";
 
-export async function grantConsent(consentType: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Authentication required" };
-
-  const { data: cp } = await supabase.from("candidate_profiles").select("id").eq("profile_id", user.id).single();
-  if (!cp) return { error: "Candidate profile not found" };
-
-  const { error } = await supabase.from("consents").insert({
-    candidate_profile_id: cp.id,
-    consent_type: consentType,
-    granted: true,
-  });
-
-  if (error) return { error: error.message };
-  revalidatePath("/documents");
-  return { success: true };
-}
 
 export async function uploadDocument(formData: FormData) {
   const supabase = await createClient();

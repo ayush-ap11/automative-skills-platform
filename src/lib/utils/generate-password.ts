@@ -1,5 +1,7 @@
+import { randomInt } from "node:crypto";
+
 /**
- * Generates a secure 12-character temporary password mixing
+ * Generates a cryptographically secure 12-character temporary password mixing
  * uppercase, lowercase, digits, and special characters.
  */
 export function generateTemporaryPassword(): string {
@@ -12,20 +14,20 @@ export function generateTemporaryPassword(): string {
 
   // Guarantee at least one character from each set
   const passwordChars = [
-    uppercase[Math.floor(Math.random() * uppercase.length)],
-    lowercase[Math.floor(Math.random() * lowercase.length)],
-    digits[Math.floor(Math.random() * digits.length)],
-    symbols[Math.floor(Math.random() * symbols.length)],
+    uppercase[randomInt(0, uppercase.length)],
+    lowercase[randomInt(0, lowercase.length)],
+    digits[randomInt(0, digits.length)],
+    symbols[randomInt(0, symbols.length)],
   ];
 
   // Fill the remaining 8 characters from the combined set
   for (let i = 0; i < 8; i++) {
-    passwordChars.push(allChars[Math.floor(Math.random() * allChars.length)]);
+    passwordChars.push(allChars[randomInt(0, allChars.length)]);
   }
 
-  // Fisher-Yates shuffle to randomize positions
+  // Cryptographically secure Fisher-Yates shuffle to randomize positions
   for (let i = passwordChars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = randomInt(0, i + 1);
     const temp = passwordChars[i];
     passwordChars[i] = passwordChars[j];
     passwordChars[j] = temp;

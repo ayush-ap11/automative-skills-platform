@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Plus, Trash2, Loader2, Check, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateScoringConfig } from "@/app/(admin)/admin/settings/actions";

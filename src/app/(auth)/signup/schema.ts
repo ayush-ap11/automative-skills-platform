@@ -11,7 +11,7 @@ export const AU_STATES = [
   "NT",
 ] as const;
 
-export type AuState = (typeof AU_STATES)[number];
+type AuState = (typeof AU_STATES)[number];
 
 export const AU_STATE_NAMES: Record<AuState, string> = {
   NSW: "New South Wales",

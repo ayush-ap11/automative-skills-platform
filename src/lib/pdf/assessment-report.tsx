@@ -1,4 +1,3 @@
-import React from "react";
 import { Document, Page, View, Text, StyleSheet, renderToBuffer, Font } from "@react-pdf/renderer";
 
 Font.registerHyphenationCallback((word) => [word]);
@@ -39,7 +38,7 @@ const s = StyleSheet.create({
   disclaimer: { fontSize: 6.8, color: "#92400e", marginTop: 4, lineHeight: 1.2 },
 });
 
-export function AssessmentReportDocument({ d }: { d: ReportData }) {
+function AssessmentReportDocument({ d }: { d: ReportData }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, AlertTriangle, ShieldAlert, Play, Loader2, CheckCircle2 } from "lucide-react";
+import { Check, ShieldAlert, Play, Loader2, CheckCircle2 } from "lucide-react";
 import { AiAnalysisPanel, AiAnalysisData } from "@/components/examiner/AiAnalysisPanel";
 import { saveQuestionReview, getVerbalAudioUrl } from "@/app/(examiner)/examiner/assessments/[id]/review/actions";
 
-export interface QuestionOptionData { id: string; option_text: string; is_correct: boolean; }
+interface QuestionOptionData { id: string; option_text: string; is_correct: boolean; }
 
 export interface QuestionData {
   id: string; questionNumber: number; question_text: string; question_type: string;
@@ -21,7 +21,7 @@ export interface ExistingReviewData {
   decision?: "accept_ai_score" | "modify_score" | "request_reassessment" | null;
   final_score?: number | null; comment?: string | null;
 }
-export interface QuestionReviewCardProps {
+interface QuestionReviewCardProps {
   assessmentId: string; question: QuestionData; answer: CandidateAnswerData | null;
   aiAnalysis: AiAnalysisData | null; existingReview?: ExistingReviewData | null;
   onReviewSaved?: (qNum: number, decision: string, score: number) => void;

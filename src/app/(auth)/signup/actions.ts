@@ -3,9 +3,16 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp } from "@/lib/utils/rate-limiter";
 import { signupSchema, type SignupInput } from "./schema";
 
 export async function signupAction(input: SignupInput) {
+  const ip = await getClientIp();
+  const rateLimit = checkRateLimit(`signup:${ip}`, 5, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { error: rateLimit.error };
+  }
+
   const validation = signupSchema.safeParse(input);
   if (!validation.success) {
     return {

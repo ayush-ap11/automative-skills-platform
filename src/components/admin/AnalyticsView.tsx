@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Briefcase, GraduationCap, LayoutTemplate, UserCheck } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PerformanceByRoleChart } from "./PerformanceByRoleChart";

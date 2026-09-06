@@ -2,7 +2,7 @@ import { Switch } from "@/components/ui/switch";
 import type { UseFormWatch, UseFormSetValue } from "react-hook-form";
 import type { ProfileFormValues } from "@/app/(candidate)/profile/schema";
 
-export type DomainToggleKey = keyof Pick<
+type DomainToggleKey = keyof Pick<
   ProfileFormValues,
   | "ev_experience"
   | "hybrid_experience"

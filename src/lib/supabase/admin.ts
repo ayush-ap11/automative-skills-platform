@@ -1,4 +1,4 @@
-// SERVER-ONLY — never import this file in a Client Component. Use only inside 'use server' actions.
+import "server-only";
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 

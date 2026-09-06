@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, ChevronRight, Calendar, Layers } from "lucide-react";
 import { AssessmentStatusBadge } from "@/components/candidate/AssessmentStatusBadge";

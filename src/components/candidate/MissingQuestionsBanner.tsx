@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { AlertCircle, X } from "lucide-react";
 import { QuestionItem } from "@/app/(candidate)/assessments/[id]/section/[sectionId]/types";
 

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Award, Briefcase, CheckCircle2 } from "lucide-react";
 
 export interface QualificationItem {

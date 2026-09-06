@@ -7,7 +7,6 @@ import {
   ArrowUp,
   Check,
   CheckCircle2,
-  ChevronRight,
   Database,
   GripVertical,
   HelpCircle,

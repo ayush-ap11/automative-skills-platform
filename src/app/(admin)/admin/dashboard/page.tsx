@@ -16,7 +16,6 @@ import {
   FileText,
   Sparkles,
   ShieldAlert,
-  Layers,
   PlayCircle,
 } from "lucide-react";
 

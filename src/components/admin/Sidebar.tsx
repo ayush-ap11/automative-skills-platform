@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Users, CheckSquare, HelpCircle, UserCheck, Award, Zap,
+  LayoutDashboard, Users, CheckSquare, UserCheck, Award, Zap,
   FileText, BarChart3, TrendingUp, Shield, Sparkles, History, LogOut, Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export const ADMIN_NAV_SECTIONS = [
+const ADMIN_NAV_SECTIONS = [
   {
     title: "Overview",
     items: [

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Calendar, AlertCircle } from "lucide-react";
 import { SafetyWarningBanner } from "@/components/shared/SafetyWarningBanner";

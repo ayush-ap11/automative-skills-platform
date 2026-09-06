@@ -1,7 +1,6 @@
 "use client";
 
 import { Activity, Clock, Database, Globe, User } from "lucide-react";
-import React from "react";
 import {
   Dialog,
   DialogContent,

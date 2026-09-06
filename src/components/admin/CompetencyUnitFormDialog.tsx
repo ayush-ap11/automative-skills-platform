@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, Plus, Check } from "lucide-react";
+import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { upsertCompetencyUnit } from "@/app/(admin)/admin/competency-framework/actions";
 
 export interface CompetencyUnitRecord {

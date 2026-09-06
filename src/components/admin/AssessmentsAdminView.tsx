@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutTemplate, UserCheck, Layers, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { TemplateFormDialog } from "./TemplateFormDialog";
 import { AssignAssessmentDialog } from "./AssignAssessmentDialog";
 import { AdminAssignedAssessmentsList, AssignedItem } from "./AdminAssignedAssessmentsList";
 
-export interface TemplateItem {
+interface TemplateItem {
   id: string; title: string; framework_version: string; section_count: number; created_at: string;
 }
 

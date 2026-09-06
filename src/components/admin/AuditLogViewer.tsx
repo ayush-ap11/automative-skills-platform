@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Clock, FilterX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   AuditLogDetailDialog,
   type AuditLogEntry,

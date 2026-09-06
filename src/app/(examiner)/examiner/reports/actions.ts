@@ -21,16 +21,47 @@ export async function getExaminerReportSignedUrl(
       return { error: "Session expired. Please log in again." };
     }
 
+    // Verify caller role and organisation
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, organisation_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || (profile.role !== "examiner" && profile.role !== "admin")) {
+      return { error: "Unauthorized: Examiner or Admin access required." };
+    }
+
     const admin = createAdminClient();
 
     const { data: report, error: repErr } = await admin
       .from("reports")
-      .select("id, candidate_profile_id, file_storage_path, assessment_id")
+      .select(`
+        id, candidate_profile_id, file_storage_path, assessment_id,
+        candidate_profiles!inner (
+          profiles!inner (organisation_id)
+        ),
+        assessments (assigned_examiner_id)
+      `)
       .eq("id", reportId)
       .maybeSingle();
 
     if (repErr || !report) {
       return { error: "Report not found." };
+    }
+
+    // Verify organisation boundary
+    const repOrgId = (report as any).candidate_profiles?.profiles?.organisation_id;
+    if (repOrgId !== profile.organisation_id) {
+      return { error: "Access denied: Report belongs to another organisation." };
+    }
+
+    // Verify examiner assignment
+    if (profile.role === "examiner") {
+      const assignedId = (report as any).assessments?.assigned_examiner_id;
+      if (assignedId && assignedId !== user.id) {
+        return { error: "Access denied: You are not assigned to this candidate assessment." };
+      }
     }
 
     if (!report.file_storage_path) {

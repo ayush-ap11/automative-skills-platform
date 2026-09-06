@@ -67,9 +67,8 @@ export function InlineQuestionForm({
   const [safetyCritical, setSafetyCritical] = useState(
     initialQuestion ? Boolean(initialQuestion.safety_critical) : false,
   );
-  const [status, setStatus] = useState<"draft" | "active" | "retired">(
-    initialQuestion?.status || "active",
-  );
+  const status: "draft" | "active" | "retired" =
+    initialQuestion?.status || "active";
   const [options, setOptions] = useState<QuestionOptionInput[]>(
     initialQuestion?.question_options &&
       initialQuestion.question_options.length > 0
